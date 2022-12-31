@@ -20,6 +20,8 @@
   "homepage": "https://github.com/utility-library/lua-parser#readme",
   "dependencies": {
     "axios": "^1.2.2",
-    "glob": "^8.0.3"
+    "chalk": "^5.2.0",
+    "glob": "^8.0.3",
+    "verbal-expressions": "^1.0.2"
   }
 }

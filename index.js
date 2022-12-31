@@ -1,9 +1,48 @@
 import fs from 'fs'
 import glob from "glob"
+import VerEx from 'verbal-expressions'
+import chalk from 'chalk'
+import { performance } from 'perf_hooks'
+
 
 import {
     Natives
 } from './modules/natives.js'
+
+let Regexes = [
+    {
+        from: VerEx()
+            .find("(")
+            // Get parameters
+            .beginCapture()
+                .anythingBut("()")
+            .endCapture()
+
+            .then(")")
+            .maybe(" ")
+            .then("=>")
+            .maybe(" ")
+            .then("{")
+            
+            .beginCapture() // Get function content
+                .then(VerEx() // then is used to create a Non-capturing group
+                    .anythingBut("{}")
+                    .or(VerEx()
+                        .find("{")
+                        .anythingBut("{}")
+                        .find("}")
+                    )
+                ).oneOrMore() // Repeate
+            .endCapture()
+            .find("}")
+        ,
+        to: "function($1)$2end"
+    }
+]
+
+function GetResourcePath(resourceName) {
+    return `./resources/${resourceName}`
+}
 
 // Fake implementation of LoadResourceFile
 function LoadResourceFile(resourceName, file) {
@@ -47,13 +86,42 @@ function GetScriptsFromManifest(type, manifest) {
     }
 }
 
+function ResolveFile(resourcePath, file) {
+    if (file.includes("*") > 0) { // If have some glob
+        return resourcePath+"/"+glob.sync(file)
+    } else {
+        return resourcePath+"/"+file
+    }
+}
+
+function PostProcess(file, compiled) {
+    let fileData = fs.readFileSync(file, "utf-8")
+
+    for (let regex of Regexes) {
+        if (regex.from.test(fileData)) {
+            fileData = fileData.replace(regex.from, regex.to)
+        }
+    }
+
+    fs.writeFileSync("./resources/test/client/processed.lua", fileData)
+}
+
 function Command(source, args) {
     let [resourceName] = args
 
+    let resourcePath = GetResourcePath(resourceName)
     let manifest = LoadResourceFile(resourceName, "fxmanifest.lua")
 
     let files = GetScriptsFromManifest("client", manifest)
-    console.log(files)
+    let start = performance.now()
+
+    for (let file of files) {
+        let fileDirectory = ResolveFile(resourcePath, file)
+        
+        PostProcess(fileDirectory)
+    }
+
+    console.log("Post processed in: "+chalk.green(performance.now() - start)+"ms")
 }
 
 // Fake command execution
@@ -76,3 +144,8 @@ RegisterCommand("_restart", (source, args) => {
 //glob(`tests/**/*.lua`, (err, files) => {
 //    console.log(files)
 //})
+
+
+const a = (asd) => {
+
+}
