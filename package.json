@@ -1,11 +1,12 @@
 {
-  "name": "typedlua",
+  "name": "lua_parser",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js",
+    "build": "esbuild src/index.js --bundle --platform=node --target=node16.0 --outfile=src/out.js"
   },
   "repository": {
     "type": "git",
@@ -19,8 +20,11 @@
   },
   "homepage": "https://github.com/utility-library/lua-parser#readme",
   "dependencies": {
+    "@citizenfx/server": "^2.0.6183-1",
     "axios": "^1.2.2",
     "chalk": "^5.2.0",
+    "dedent": "^0.7.0",
+    "esbuild": "0.16.12",
     "glob": "^8.0.3",
     "verbal-expressions": "^1.0.2"
   }
