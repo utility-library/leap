@@ -92,7 +92,11 @@ let Regexes = [
             
             return fileData.replace(verbalEx, dedent`
                 $1 = function(...)
-                    local obj = setmetatable(Class$1, {})
+                    local obj = setmetatable({}, {
+                        __index = function(self, key) 
+                            return Prototype$1[key] 
+                        end
+                    })
 
                     if obj.constructor then
                         obj:constructor(...)
@@ -101,7 +105,65 @@ let Regexes = [
                     return obj
                 end
 
-                Class$1 = {
+                Prototype$1 = {
+            `)
+        }
+    },
+    {
+        from: VerEx()
+            .find("class")
+            .maybe(" ")
+            .beginCapture()
+                .word()
+            .endCapture()
+            .maybe(" ")
+            .find("extends")
+            .maybe(" ")
+            .beginCapture()
+                .word()
+            .endCapture()
+            .maybe(" ")
+
+            .then("{")
+        ,
+        to: function(verbalEx, fileData) {
+            let regExp = verbalEx.toRegExp()
+            let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
+
+            for (let i of matchIndices) {
+                let linesAfterMatch = fileData.slice(i)
+                fileData = ReplaceFunctionEnding(fileData, linesAfterMatch, "}")
+            }
+            
+            return fileData.replace(verbalEx, dedent`
+                $1 = function(...)
+                    if Prototype$2 then
+                        Prototype$1.super = setmetatable({}, {
+                            __index = function(self, key)
+                                return Prototype$2[key]
+                            end,
+                            __call = function(self, ...)
+                                self.constructor(...)
+                            end
+                        })
+                    else
+                        error("ExtendingNotDefined: trying to extend the class $2 that is not defined")
+                    end
+
+                    local obj = setmetatable({}, {
+                        __index = function(self, key) 
+                            return Prototype$1[key] or Prototype$2[key] 
+                        end
+                    })
+
+                    if obj.constructor then
+                        obj:constructor(...)
+                    end
+
+                    return obj
+                end
+
+                Prototype$1 = {
             `)
         }
     }
@@ -135,7 +197,7 @@ function ReplaceFunctionEnding(string, linesAfterMatch, to) {
 
 function ResolveFile(resourcePath, file) {
     if (file.includes("*") > 0) { // If have some glob
-        return resourcePath+"/"+glob.sync(file)
+        return glob.sync(file, {cwd: resourcePath, absolute: true})
     } else {
         return resourcePath+"/"+file
     }
@@ -197,16 +259,31 @@ RegisterCommand("parser", (source, args) => {
                 for (let file of files) {
                     let fileDirectory = ResolveFile(resourcePath, file)
                     
-                    PostProcess(resourceName, fileDirectory, type)
+                    if (typeof fileDirectory != "string") {
+                        for (let fileDir of fileDirectory) {
+                            PostProcess(resourceName, fileDir, type)
+                        }
+                    } else {
+                        PostProcess(resourceName, fileDirectory, type)
+                    }
                 }
 
                 break;
             case "restart":
                 for (let file of files) {
+                    //console.log(file)
                     let fileDirectory = ResolveFile(resourcePath, file)
+                    //console.log(fileDirectory)
                     
-                    prePostProcessFiles[fileDirectory] = fs.readFileSync(fileDirectory, "utf-8")
-                    PostProcess(resourceName, fileDirectory, type)
+                    if (typeof fileDirectory != "string") {
+                        for (let fileDir of fileDirectory) {
+                            prePostProcessFiles[fileDir] = fs.readFileSync(fileDir, "utf-8")
+                            PostProcess(resourceName, fileDir, type)
+                        }
+                    } else {
+                        prePostProcessFiles[fileDirectory] = fs.readFileSync(fileDirectory, "utf-8")
+                        PostProcess(resourceName, fileDirectory, type)
+                    }
                 }
 
                 break;
