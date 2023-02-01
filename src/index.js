@@ -10,6 +10,44 @@ import {MatchRegex, MatchAllRegex} from "./modules/regex.js"
 
 import {Natives} from './modules/natives.js'
 
+function classIterator(fileData, matchIndices) {
+    const classFunctionTester = VerEx().find("function").maybe(" ").then("(")
+    let lines;
+    //console.log(matchIndices)
+    for (let i of matchIndices) {
+        let linesAfterMatch = fileData.slice(i);
+        [fileData,lastLine] = ReplaceFunctionEnding(fileData, linesAfterMatch, "}")
+        const lineStart = Number(String(fileData).substring(0, i).occurrences("\n") + 1);
+        lines = fileData.split("\n");
+        let inFunction = false;
+        let countEnds;
+        lastLine = Number(lastLine) + lineStart
+        for (let j = lineStart; j <= lastLine; j++) {
+            const line = lines[j];
+
+            //console.log(inFunction)
+            if (!inFunction && classFunctionTester.test(line)) {
+                lines[j] = line.replace(line.match(classFunctionTester.toRegExp()), "function(self,")
+                
+                countEnds = 1;
+                inFunction = true;
+            } else if (inFunction) {
+                console.log(line.occurrences("if"), line.occurrences("function"), line.occurrences("end"))
+                countEnds += line.occurrences("if") + line.occurrences("function")
+                countEnds -= line.occurrences("end")
+
+                if (countEnds === 0) {
+                    inFunction = false;
+                }
+            }
+        }
+        
+        fileData = lines.join("\n")
+    }
+
+    return fileData
+}
+
 let Regexes = [
     {
         from: VerEx()
@@ -31,8 +69,8 @@ let Regexes = [
             //console.log("Match indices:", regExp)
 
             for (let i of matchIndices) {
-                let linesAfterMatch = fileData.slice(i)
-                fileData = ReplaceFunctionEnding(fileData, linesAfterMatch)
+                let linesAfterMatch = fileData.slice(i);
+                [fileData] = ReplaceFunctionEnding(fileData, linesAfterMatch)
             } 
             
             fileData = fileData.replace(regExp, "function($1)")
@@ -58,8 +96,8 @@ let Regexes = [
             let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
 
             for (let i of matchIndices) {
-                let linesAfterMatch = fileData.slice(i)
-                fileData = ReplaceFunctionEnding(fileData, linesAfterMatch)
+                let linesAfterMatch = fileData.slice(i);
+                [fileData] = ReplaceFunctionEnding(fileData, linesAfterMatch)
             } 
             
             fileData = fileData.replace(regExp, "function($1)")
@@ -85,10 +123,7 @@ let Regexes = [
             let regExp = verbalEx.toRegExp()
             let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
 
-            for (let i of matchIndices) {
-                let linesAfterMatch = fileData.slice(i)
-                fileData = ReplaceFunctionEnding(fileData, linesAfterMatch, "}")
-            }
+            fileData = classIterator(fileData, matchIndices)
             
             return fileData.replace(verbalEx, dedent`
                 $1 = function(...)
@@ -129,11 +164,8 @@ let Regexes = [
         to: function(verbalEx, fileData) {
             let regExp = verbalEx.toRegExp()
             let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
-
-            for (let i of matchIndices) {
-                let linesAfterMatch = fileData.slice(i)
-                fileData = ReplaceFunctionEnding(fileData, linesAfterMatch, "}")
-            }
+            
+            fileData = classIterator(fileData, matchIndices)
             
             return fileData.replace(verbalEx, dedent`
                 $1 = function(...)
@@ -167,7 +199,7 @@ let Regexes = [
             `)
         }
     },
-
+    /*
     {
         from: VerEx()
         .find("Prototype")
@@ -208,6 +240,7 @@ let Regexes = [
             return lines.join("\n")
         }
     }
+    */
 ]
 
 String.prototype.occurrences = function(string) {
@@ -218,9 +251,9 @@ String.prototype.occurrences = function(string) {
 
 function ReplaceFunctionEnding(string, linesAfterMatch, to) {
     let lineByLine = linesAfterMatch.split("\n") // Unpack lines
-
+    let i;
     let curlyBracesCounter = 0
-    for (let i in lineByLine) {
+    for (i in lineByLine) {
         let line = lineByLine[i]
         
         curlyBracesCounter += line.occurrences("{")
@@ -233,7 +266,7 @@ function ReplaceFunctionEnding(string, linesAfterMatch, to) {
         }
     }
     
-    return string.replace(linesAfterMatch, lineByLine.join("\n")) // Pack lines
+    return [string.replace(linesAfterMatch, lineByLine.join("\n")), i] // Pack lines
 }
 
 function ResolveFile(resourcePath, file) {
