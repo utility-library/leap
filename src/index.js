@@ -166,6 +166,25 @@ let Regexes = [
                 Prototype$1 = {
             `)
         }
+    },
+
+    {
+        from: VerEx()
+        .find("Prototype")
+        .beginCapture()
+            .word()
+            .oneOrMore()
+        .endCapture()
+        .then(" = {"),
+
+        to: function(verbalEx, fileData) {
+            let regExp = verbalEx.toRegExp()
+            let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
+
+            console.log(verbalEx)
+            
+            return fileData
+        }
     }
 ]
 
@@ -212,6 +231,7 @@ function PostProcess(resourceName, file, type) {
         } else {
             regex.from.removeModifier("g") // Prevent lastIndex from giving false negatives
             let match = regex.from.test(fileData)
+            console.log(match)
             regex.from.addModifier("g")
 
             if (match) {
