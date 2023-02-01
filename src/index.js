@@ -32,7 +32,6 @@ function classIterator(fileData, matchIndices) {
                 countEnds = 1;
                 inFunction = true;
             } else if (inFunction) {
-                console.log(line.occurrences("if"), line.occurrences("function"), line.occurrences("end"))
                 countEnds += line.occurrences("if") + line.occurrences("function")
                 countEnds -= line.occurrences("end")
 
@@ -199,6 +198,18 @@ let Regexes = [
             `)
         }
     },
+
+    {
+        from: VerEx().find("new ").beginCapture().word().then("(").endCapture(),
+
+        to: (verbalEx, fileData) => {
+            let regExp = verbalEx.toRegExp()
+            //let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
+            
+            return fileData.replace(verbalEx, "$1")
+        }
+    }
+
     /*
     {
         from: VerEx()
