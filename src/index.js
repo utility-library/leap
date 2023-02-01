@@ -173,17 +173,39 @@ let Regexes = [
         .find("Prototype")
         .beginCapture()
             .word()
-            .oneOrMore()
         .endCapture()
         .then(" = {"),
 
         to: function(verbalEx, fileData) {
             let regExp = verbalEx.toRegExp()
             let matchIndices = MatchAllRegex(fileData, regExp).map(x => x.index);
+            const lines = fileData.split("\n")
+            const tester = VerEx().find("function").maybe(" ").then("(")
 
-            console.log(verbalEx)
             
-            return fileData
+
+            for (let matchedLine of matchIndices) {
+                let count = 0;
+                const line = String(fileData).substring(0, matchedLine).occurrences("\n") + 1 // Zero based + gotta start from the line next
+
+                console.log(line)
+                for (let i = line; true; i++) {
+                    let line = lines[i];
+                    count += line.occurrences("{")
+                    count -= line.occurrences("}")
+                    if (tester.test(line)) {
+                        console.log(line.match(tester.toRegExp()))
+                        line = line.replace(line.match(tester.toRegExp()), "function(self, ")
+                        lines[i] = line;
+                    }
+
+                    if (count === 0) {
+                        break;
+                    }
+                }
+            }
+            
+            return lines.join("\n")
         }
     }
 ]
@@ -231,7 +253,6 @@ function PostProcess(resourceName, file, type) {
         } else {
             regex.from.removeModifier("g") // Prevent lastIndex from giving false negatives
             let match = regex.from.test(fileData)
-            console.log(match)
             regex.from.addModifier("g")
 
             if (match) {
