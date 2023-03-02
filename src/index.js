@@ -9,6 +9,7 @@ import {GetAllResourceMetadata} from "./modules/manifest.js"
 import {MatchRegex, MatchAllRegex} from "./modules/regex.js"
 
 import {Natives} from './modules/natives.js'
+import { exec } from 'child_process'
 
 function classIterator(fileData, matchIndices) {
     const classFunctionTester = VerEx().find("function").maybe(" ").then("(")
@@ -80,7 +81,7 @@ let Regexes = [
     },
     {
         from: VerEx()
-            // Get parameters
+            // Get parameter
             .beginCapture()
                 .word()
             .endCapture()
@@ -124,7 +125,7 @@ let Regexes = [
 
             fileData = classIterator(fileData, matchIndices)
             
-            return fileData.replace(verbalEx, dedent`
+            /* Beautified code, code is minified to help with error debugging
                 $1 = function(...)
                     local obj = setmetatable({}, {
                         __index = function(self, key) 
@@ -140,6 +141,10 @@ let Regexes = [
                 end
 
                 Prototype$1 = {
+            */
+
+            return fileData.replace(verbalEx, dedent`
+                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={
             `)
         }
     },
@@ -166,7 +171,7 @@ let Regexes = [
             
             fileData = classIterator(fileData, matchIndices)
             
-            return fileData.replace(verbalEx, dedent`
+            /* Beautified code, code is minified to help with error debugging
                 $1 = function(...)
                     if Prototype$2 then
                         Prototype$1.super = setmetatable({}, {
@@ -195,8 +200,98 @@ let Regexes = [
                 end
 
                 Prototype$1 = {
+            */
+
+            return fileData.replace(verbalEx, dedent`
+                $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={}
             `)
         }
+    },
+    {
+        from: VerEx()
+            .find("function")
+            .maybe(" ")
+            .maybe(VerEx().word())
+            .beginCapture()
+                .then("(")
+                .anythingBut("()")
+                .then(")")
+            .endCapture()
+        ,
+        to: function(verbalEx, fileData) {
+            let regExp = verbalEx.toRegExp()
+            let matches = MatchAllRegex(fileData, regExp);
+            let defaultValueRegex = VerEx()
+                .beginCapture()
+                    .word()
+                .endCapture()
+                
+                .maybe(" ")
+                .then("=")
+                .maybe(" ")
+                
+                .beginCapture()
+                    .anythingBut(",)")
+                .endCapture()
+                
+            matches.map(x => {
+                let regExp = defaultValueRegex.toRegExp()
+                let matches = MatchAllRegex(x[1], regExp)
+                
+                // If have matched something
+                if (matches.length > 0) {
+                    let linesAfterMatch = fileData.slice(x.index, x.index + 100) // takes only the next 200 characters to optimize the replacing, should be enough for all the parameters                     
+                    let originalLinesAfterMatch = linesAfterMatch
+                    let defaultValueCheckZone = linesAfterMatch.slice(x[0].length, 100)
+
+                    let originalDefaultValueCheckZone = defaultValueCheckZone    
+
+                    matches.map(match => {
+                        // add the default value check 
+                        defaultValueCheckZone =
+                            `;${match[1]} = ${match[1]} ~= nil and ${match[1]} or ${match[2]}` +  // key = key ~= nil and value or defaultValue
+                            defaultValueCheckZone
+                            
+                        // remove the default value in the parameters
+                        let regexEscaped = match[2].replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&") // Escaped all regex special character
+                        let noExecutablePart = new RegExp("\\s?=\\s?"+regexEscaped, 'gm') // " = value"
+
+                        linesAfterMatch = linesAfterMatch.replace(noExecutablePart, "")
+                    })
+                        
+                    linesAfterMatch = linesAfterMatch.replace(originalDefaultValueCheckZone, defaultValueCheckZone) // add the check
+                    fileData = fileData.replace(originalLinesAfterMatch, linesAfterMatch)
+                }
+            })
+            
+            return fileData
+            /*return fileData.replace(regExp, dedent`
+                function($1)
+            `)*/
+        }
+    },
+    {
+        from: VerEx()
+            .find("...")
+            .not(",")
+            .beginCapture()
+                .anything()
+            .endCapture()
+            .endOfLine()
+        ,
+        to: function(verbalEx, fileData) {
+            let regExp = verbalEx.toRegExp()
+            
+            MatchAllRegex(fileData, regExp).map(x => {
+                let file = fileData.slice(x.index)
+                let originalFile = file
+
+                file = file.replace(`...${x[1]}`, `table.unpack(${x[1]})`)
+                fileData = fileData.replace(originalFile, file)
+            });
+            
+            return fileData
+        },
     },
 
     {
@@ -260,19 +355,21 @@ String.prototype.occurrences = function(string) {
     return (this.match(regex) || []).length
 }
 
-function ReplaceFunctionEnding(string, linesAfterMatch, to) {
+function ReplaceFunctionEnding(string, linesAfterMatch, to = "end", from = "{", ending = "}") {
     let lineByLine = linesAfterMatch.split("\n") // Unpack lines
     let i;
     let curlyBracesCounter = 0
     for (i in lineByLine) {
         let line = lineByLine[i]
         
-        curlyBracesCounter += line.occurrences("{")
-        curlyBracesCounter -= line.occurrences("}")
+        curlyBracesCounter += line.occurrences(from)
+        curlyBracesCounter -= line.occurrences(ending)
 
         //console.log(curlyBracesCounter)
         if (curlyBracesCounter == 0) {
-            lineByLine[i] = line.replace("}", to || "end")
+            if (to) {
+                lineByLine[i] = line.replace(ending, to)
+            }
             break
         }
     }
@@ -321,7 +418,21 @@ function PostProcess(resourceName, file, type) {
 }
 
 RegisterCommand("parser", (source, args) => {
+    if (source != 0) return // only server side can use the command
+
     let [type, resourceName] = args
+
+    if (type == "rebuild" && !resourceName) { // esbuild rebuild from cfx.re server
+        let resourceName = GetCurrentResourceName()
+        let path = GetResourcePath(resourceName)
+
+        let runBuild = exec("npm run build", {cwd: path})
+
+        runBuild.on("close", () => {
+            console.log("Done")
+        })
+        return
+    }
 
     if (!type || !resourceName) {
         console.log("parser restart <resource>")
@@ -392,4 +503,4 @@ RegisterCommand("parser", (source, args) => {
         }
     }
 
-}, false)
+}, true)
