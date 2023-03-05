@@ -1,4 +1,4 @@
-# Lua Parser
+# Lua Pre Processor
  
-Parses an extended version of lua into pure executable lua.
+Pre process an extended version of lua into pure executable lua.
 Mainly intended for FiveM.
