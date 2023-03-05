@@ -1,5 +1,5 @@
 {
-  "name": "lua_parser",
+  "name": "lua_preprocessor",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/utility-library/lua-parser.git"
+    "url": "git+https://github.com/utility-library/lua-preprocessor.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/utility-library/lua-parser/issues"
+    "url": "https://github.com/utility-library/lua-preprocessor/issues"
   },
-  "homepage": "https://github.com/utility-library/lua-parser#readme",
+  "homepage": "https://github.com/utility-library/lua-preprocessor#readme",
   "dependencies": {
     "@citizenfx/server": "^2.0.6183-1",
     "axios": "^1.2.2",
