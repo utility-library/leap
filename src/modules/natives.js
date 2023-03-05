@@ -1,3 +1,5 @@
+// NOT IMPLEMENTED FOR NOW
+
 import axios from "axios"
 import fs from 'fs'
 
@@ -11,4 +13,3 @@ axios.get("https://runtime.fivem.net/doc/natives.json").then((answer) => {
         Natives = { ...Natives, ...answer.data  };
     })
 })
-

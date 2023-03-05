@@ -15,10 +15,4 @@ function MatchAllRegex(string, regex) {
     return result
 }
 
-function MatchRegex(string, pattern) {
-    let regex = new RegExp(pattern)
-
-    return regex.exec(string)
-}
-
-export {MatchRegex, MatchAllRegex}
+export {MatchAllRegex}
