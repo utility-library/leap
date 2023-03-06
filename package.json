@@ -1,7 +1,8 @@
 {
-  "name": "lua_preprocessor",
+  "name": "leap",
   "version": "1.0.0",
-  "description": "",
+  "description": "Pre-processor of a \"modernized\" and extended version of lua that pre-processes in pure executable lua. Mainly intended for FiveM",
+  "authors": "XenoS, MrFreex",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -10,19 +11,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/utility-library/lua-preprocessor.git"
+    "url": "git+https://github.com/utility-library/Leap.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/utility-library/lua-preprocessor/issues"
+    "url": "https://github.com/utility-library/Leap/issues"
   },
-  "homepage": "https://github.com/utility-library/lua-preprocessor#readme",
+  "homepage": "https://github.com/utility-library/Leap#readme",
   "dependencies": {
     "@citizenfx/server": "^2.0.6183-1",
     "axios": "^1.2.2",
-    "chalk": "^5.2.0",
     "dedent": "^0.7.0",
     "esbuild": "0.16.12",
     "glob": "^8.0.3",

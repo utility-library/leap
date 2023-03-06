@@ -13,7 +13,7 @@ import "./modules/string"
 import { Config } from "../config"
 
 //#region Functions
-function EsbuildBundle() {
+function EsbuildBuild() {
     let resourceName = GetCurrentResourceName()
     let path = GetResourcePath(resourceName)
 
@@ -37,9 +37,9 @@ CreateCommand = function(name) {
     
         if (source != 0) return // only server side can use the command
     
-        if (type == "rebundle" && !resourceName) { // esbuild rebuild directly from fxserver
-            EsbuildBundle()
-            console.log("^2Rebundled^0")
+        if (type == "rebuild" && !resourceName) { // esbuild rebuild directly from fxserver
+            EsbuildBuild()
+            console.log("^2Rebuilt^0")
     
             return
         }
@@ -47,7 +47,7 @@ CreateCommand = function(name) {
         if (!type || !resourceName) {
             console.log("parser restart <resource>")
             console.log("parser build <resource>")
-            if (Config.Dev) console.log("parser rebundle")
+            if (Config.Dev) console.log("parser rebuild")
             return
         }
     
