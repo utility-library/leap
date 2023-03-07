@@ -2850,10 +2850,10 @@ function CreateCommand(name) {
       return;
     }
     if (!type || !resourceName) {
-      console.log("parser restart <resource>");
-      console.log("parser build <resource>");
+      console.log(`${name} restart <resource>`);
+      console.log(`${name} build <resource>`);
       if (Config.Dev)
-        console.log("parser rebuild");
+        console.log(`${name} rebuild`);
       return;
     }
     let resourcePath = GetResourcePath(resourceName);
@@ -2927,7 +2927,7 @@ function CreateCommand(name) {
         break;
     }
     if (Config.Dev)
-      console.log("Post processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
+      console.log("Pre processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
     if (type == "restart") {
       StopResource(resourceName);
       StartResource(resourceName);
@@ -3140,7 +3140,7 @@ var DefaultValue = {
 
 // src/features/unpack.js
 var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
-var match2 = (0, import_verbal_expressions5.default)().find("...").not(",").not(")").not("}").beginCapture().anything().endCapture().endOfLine();
+var match2 = (0, import_verbal_expressions5.default)().find("...").not(",").not(")").not("}").beginCapture().word().endCapture();
 var Unpack = {
   from: match2,
   to: function(file) {
@@ -3217,7 +3217,7 @@ var Features = [
   New,
   Decorators
 ];
-CreateCommand("parser");
+CreateCommand("leap");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Features
