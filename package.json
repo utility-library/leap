@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "build": "esbuild src/index.js --bundle --platform=node --target=node16.0 --outfile=src/out.js"
+    "build": "esbuild src/index.js --bundle --platform=node --outfile=src/out.js"
   },
   "repository": {
     "type": "git",
