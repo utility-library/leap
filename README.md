@@ -239,6 +239,8 @@ end
 ```
 
 ### Unpack (...)
+> **Warning** for now this operator only works with variables, so writing `...{100, 200, 300}` will not work
+
 This operator allows you to unpack arrays (not hashmaps) into multiple variables.
 The preprocessor converts this operator into the `table.unpack` function.
 
