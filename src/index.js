@@ -21,6 +21,6 @@ let Features = [
     Decorators
 ]
 
-CreateCommand("parser")
+CreateCommand("leap")
 
 export {Features}

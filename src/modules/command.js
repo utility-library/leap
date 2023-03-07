@@ -45,9 +45,9 @@ function CreateCommand(name) {
         }
     
         if (!type || !resourceName) {
-            console.log("parser restart <resource>")
-            console.log("parser build <resource>")
-            if (Config.Dev) console.log("parser rebuild")
+            console.log(`${name} restart <resource>`)
+            console.log(`${name} build <resource>`)
+            if (Config.Dev) console.log(`${name} rebuild`)
             return
         }
     
@@ -142,7 +142,7 @@ function CreateCommand(name) {
                 break;
         }
     
-        if (Config.Dev) console.log("Post processed in: ^2"+(performance.now() - start)+"^0ms")
+        if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms")
     
         if (type == "restart") {
             // Explanation:
