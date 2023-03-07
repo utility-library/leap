@@ -34,10 +34,10 @@ let ArrowFunction = {
 
             match.removeModifier("g") // we want to replace it once, so later, if necessary, we can replace the one without parentheses with the correct capture group
 
-            if (x[1]) { // match with the brackets
-                // replace the opening tag from "(params) => {" to "function(params)"
+            if (x[1] != null) { // match with the brackets
+                // replace the opening tag from "(params) => {" to "function(params)"                
                 file = file.replace(match, "function($1)") 
-            } else if (x[2]) { // match without the brackets
+            } else if (x[2] != null) { // match without the brackets                
                 // replace the opening tag from "param => {" to "function(param)"
                 file = file.replace(match, "function($2)")
             }
