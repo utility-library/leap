@@ -15,15 +15,15 @@ After preprocessing the files, [**FiveM**](https://fivem.net) will read the file
 </div>
 
 ## Commands
-### parser restart
-`parser restart <resource>` restarts the resource by preprocessing it before restarting it using *shadow writing*, this command is quite useful when creating a resource, since you don't have to rebuild it every time and restart the resource but it's like everything in one command.
+### leap restart
+`leap restart <resource>` restarts the resource by preprocessing it before restarting it using *shadow writing*, this command is quite useful when creating a resource, since you don't have to rebuild it every time and restart the resource but it's like everything in one command.
 
 **TIP**: these commands can also be used in the cfg after the Leap startup.
 
 ---
 
-### parser build
-`parser build <resource>` pre-processes the resource by creating a subfolder named `build` that contains the pre-processed version of the resource
+### leap build
+`leap build <resource>` pre-processes the resource by creating a subfolder named `build` that contains the pre-processed version of the resource
 
 resource structure tree after build:
 ```
@@ -39,10 +39,10 @@ resource structure tree after build:
 
 ---
 
-### parser rebuild
+### leap rebuild
 > **Warning** Command designed only for development
 
-`parser rebuild` rebuild with esbuild directly from fxserver instead of having to open a separate process (simply run `npm run build`)
+`leap rebuild` rebuild with esbuild directly from fxserver instead of having to open a separate process (simply run `npm run build`)
 
 ## Features
 
@@ -55,12 +55,12 @@ Is simply an alternative to writing anonymous functions
 Syntaxes:
 ```lua
 (param1, paramN) => {
-  statements
+  -- code
 }
 ```
 ```lua
 param => {
-  statements
+  -- code
 }
 ```
 
@@ -84,21 +84,13 @@ Constructor parameters are those passed when a new object is instantiated.
 
 [Read more here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
 
-Syntaxes:  
+Syntax:  
 > **Note** Methods automatically hold the `self` variable referring to the instantiated object
 ```lua
-class BaseClass {
-    someVariable = 100,
+class className {
+    var1 = 1,
     constructor = function()
-        print("instantiated base class")
-        print(self.someVariable)
-    end
-}
-```
-```lua
-class AdvancedClass extends BaseClass {
-    constructor = function()
-        print("instantiated advanced class")
+        print(self.var1)
     end
 }
 ```
@@ -115,10 +107,10 @@ class BaseClass {
 class AdvancedClass extends BaseClass {
     constructor = function()
         print("instantiated advanced class")
-        super()
+        self.super()
         
         -- right now they should printout the same value, since they have not been touched
-        print(super.someVariable)
+        print(self.super.someVariable)
         print(self.someVariable)
     end
 }
@@ -140,35 +132,20 @@ You can also pass parameters to the decorators.
 
 [Read more here](https://realpython.com/primer-on-python-decorators/#simple-decorators)
 
-Syntaxes:  
+Syntax:  
 ```lua
-function exampleDecorator(func)
-    return function(...)
-        func(...)
-        print("test2")
+function decoratorName(func, a, b)
+    return function(c, d)
+        func(c,d)
     end
 end
 
-@exampleDecorator
-function example()
-    print("test")
+@decoratorName(a, b)
+function fnName(c, d)
+    -- code
 end
 ```
 
-```lua
-function exampleDecorator(func, canDoSomething)
-    return function(...)
-        func(...)
-        print("test2")
-        print("can do something?", tostring(canDoSomething))
-    end
-end
-
-@exampleDecorator(true)
-function example()
-    print("test")
-end
-```
 Example:
 ```lua
 function stopwatch(func)
@@ -193,5 +170,92 @@ someMathIntensiveFunction(10, 50, 100)
 -- output: 
 --[[
     someMathIntensiveFunction taken 2ms to execute
+]]
+```
+
+### Default value
+Default function parameters allow named parameters to be initialized with default values if no value or nil is passed.
+
+Syntax:  
+```lua
+function fnName(param1 = defaultValue1, ..., paramN = defaultValueN) {
+  -- code
+}
+```
+
+Example:
+```lua
+function multiply(a, b = 1)
+  return a * b
+end
+
+print(multiply(5, 2))
+-- Expected output: 10
+
+print(multiply(5))
+-- Expected output: 5
+```
+
+### New
+The new operator lets create an instance of an object.
+Is actually converted during the preprocessing process with an empty string, so it is simply eliminated.
+Its use is simply to make it clear in the code when you are instantiating an object or calling a function
+
+Syntax:  
+```lua
+new Class()
+```
+
+Example:
+```lua
+class BaseClass {
+    someVariable = 100,
+    constructor = function()
+        print("instantiated base class")
+    end
+}
+
+local base = new BaseClass()
+```
+
+### Not equal (!=)
+Another method of writing the not equal operator (~=) 
+
+Syntax:  
+```lua
+if true != false then
+    -- code
+end
+```
+
+Example:
+```lua
+local a = 10
+local b = 20
+
+if a != b then
+    print("not equal")
+end
+```
+
+### Unpack (...)
+This operator allows you to unpack arrays (not hashmaps) into multiple variables.
+The preprocessor converts this operator into the `table.unpack` function.
+
+Syntax:  
+```lua
+a,b,c = ...array
+```
+
+Example:
+```lua
+local numbers = {100, 200, 300}
+
+local number1, number2, number3 = ...numbers
+
+console.log(number1, number2, number3)
+-- output
+--[[
+    100    200    300
 ]]
 ```
