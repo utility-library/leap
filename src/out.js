@@ -25,6 +25,357 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// node_modules/verbal-expressions/dist/verbalexpressions.js
+var require_verbalexpressions = __commonJS({
+  "node_modules/verbal-expressions/dist/verbalexpressions.js"(exports, module2) {
+    (function(root, factory) {
+      if (root === void 0 && window !== void 0)
+        root = window;
+      if (typeof define === "function" && define.amd) {
+        define("VerEx", [], function() {
+          return root["VerEx"] = factory();
+        });
+      } else if (typeof module2 === "object" && module2.exports) {
+        module2.exports = factory();
+      } else {
+        root["VerEx"] = factory();
+      }
+    })(exports, function() {
+      var _createClass = function() {
+        function defineProperties(target, props) {
+          for (var i2 = 0; i2 < props.length; i2++) {
+            var descriptor = props[i2];
+            descriptor.enumerable = descriptor.enumerable || false;
+            descriptor.configurable = true;
+            if ("value" in descriptor)
+              descriptor.writable = true;
+            Object.defineProperty(target, descriptor.key, descriptor);
+          }
+        }
+        return function(Constructor, protoProps, staticProps) {
+          if (protoProps)
+            defineProperties(Constructor.prototype, protoProps);
+          if (staticProps)
+            defineProperties(Constructor, staticProps);
+          return Constructor;
+        };
+      }();
+      function _classCallCheck(instance, Constructor) {
+        if (!(instance instanceof Constructor)) {
+          throw new TypeError("Cannot call a class as a function");
+        }
+      }
+      function _possibleConstructorReturn(self, call) {
+        if (!self) {
+          throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+        }
+        return call && (typeof call === "object" || typeof call === "function") ? call : self;
+      }
+      function _inherits(subClass, superClass) {
+        if (typeof superClass !== "function" && superClass !== null) {
+          throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+        }
+        subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });
+        if (superClass)
+          Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+      }
+      function _extendableBuiltin(cls) {
+        function ExtendableBuiltin() {
+          var instance = Reflect.construct(cls, Array.from(arguments));
+          Object.setPrototypeOf(instance, Object.getPrototypeOf(this));
+          return instance;
+        }
+        ExtendableBuiltin.prototype = Object.create(cls.prototype, {
+          constructor: {
+            value: cls,
+            enumerable: false,
+            writable: true,
+            configurable: true
+          }
+        });
+        if (Object.setPrototypeOf) {
+          Object.setPrototypeOf(ExtendableBuiltin, cls);
+        } else {
+          ExtendableBuiltin.__proto__ = cls;
+        }
+        return ExtendableBuiltin;
+      }
+      var VerbalExpression = function(_extendableBuiltin2) {
+        _inherits(VerbalExpression2, _extendableBuiltin2);
+        function VerbalExpression2() {
+          _classCallCheck(this, VerbalExpression2);
+          var _this = _possibleConstructorReturn(this, (VerbalExpression2.__proto__ || Object.getPrototypeOf(VerbalExpression2)).call(this, "", "gm"));
+          _this._prefixes = "";
+          _this._source = "";
+          _this._suffixes = "";
+          _this._modifiers = "gm";
+          return _this;
+        }
+        _createClass(VerbalExpression2, [{
+          key: "add",
+          value: function add() {
+            var value = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : "";
+            this._source += value;
+            var pattern = this._prefixes + this._source + this._suffixes;
+            this.compile(pattern, this._modifiers);
+            return this;
+          }
+        }, {
+          key: "startOfLine",
+          value: function startOfLine() {
+            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+            this._prefixes = enable ? "^" : "";
+            return this.add();
+          }
+        }, {
+          key: "endOfLine",
+          value: function endOfLine() {
+            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+            this._suffixes = enable ? "$" : "";
+            return this.add();
+          }
+        }, {
+          key: "then",
+          value: function then(value) {
+            value = VerbalExpression2.sanitize(value);
+            return this.add("(?:" + value + ")");
+          }
+        }, {
+          key: "find",
+          value: function find(value) {
+            return this.then(value);
+          }
+        }, {
+          key: "maybe",
+          value: function maybe(value) {
+            value = VerbalExpression2.sanitize(value);
+            return this.add("(?:" + value + ")?");
+          }
+        }, {
+          key: "or",
+          value: function or(value) {
+            this._prefixes += "(?:";
+            this._suffixes = ")" + this._suffixes;
+            this.add(")|(?:");
+            if (value) {
+              this.then(value);
+            }
+            return this;
+          }
+        }, {
+          key: "anything",
+          value: function anything() {
+            return this.add("(?:.*)");
+          }
+        }, {
+          key: "anythingBut",
+          value: function anythingBut(value) {
+            if (Array.isArray(value)) {
+              value = value.join("");
+            }
+            value = VerbalExpression2.sanitize(value);
+            return this.add("(?:[^" + value + "]*)");
+          }
+        }, {
+          key: "something",
+          value: function something() {
+            return this.add("(?:.+)");
+          }
+        }, {
+          key: "somethingBut",
+          value: function somethingBut(value) {
+            if (Array.isArray(value)) {
+              value = value.join("");
+            }
+            value = VerbalExpression2.sanitize(value);
+            return this.add("(?:[^" + value + "]+)");
+          }
+        }, {
+          key: "anyOf",
+          value: function anyOf(value) {
+            if (Array.isArray(value)) {
+              value = value.join("");
+            }
+            value = VerbalExpression2.sanitize(value);
+            return this.add("[" + value + "]");
+          }
+        }, {
+          key: "any",
+          value: function any(value) {
+            return this.anyOf(value);
+          }
+        }, {
+          key: "not",
+          value: function not(value) {
+            value = VerbalExpression2.sanitize(value);
+            this.add("(?!" + value + ")");
+            return this;
+          }
+        }, {
+          key: "range",
+          value: function range() {
+            var value = "";
+            for (var i2 = 1; i2 < arguments.length; i2 += 2) {
+              var from = VerbalExpression2.sanitize(arguments.length <= i2 - 1 ? void 0 : arguments[i2 - 1]);
+              var to = VerbalExpression2.sanitize(arguments.length <= i2 ? void 0 : arguments[i2]);
+              value += from + "-" + to;
+            }
+            return this.add("[" + value + "]");
+          }
+        }, {
+          key: "lineBreak",
+          value: function lineBreak() {
+            return this.add("(?:\\r\\n|\\r|\\n)");
+          }
+        }, {
+          key: "br",
+          value: function br() {
+            return this.lineBreak();
+          }
+        }, {
+          key: "tab",
+          value: function tab() {
+            return this.add("\\t");
+          }
+        }, {
+          key: "word",
+          value: function word() {
+            return this.add("\\w+");
+          }
+        }, {
+          key: "digit",
+          value: function digit() {
+            return this.add("\\d");
+          }
+        }, {
+          key: "whitespace",
+          value: function whitespace() {
+            return this.add("\\s");
+          }
+        }, {
+          key: "addModifier",
+          value: function addModifier(modifier) {
+            if (!this._modifiers.includes(modifier)) {
+              this._modifiers += modifier;
+            }
+            return this.add();
+          }
+        }, {
+          key: "removeModifier",
+          value: function removeModifier(modifier) {
+            this._modifiers = this._modifiers.replace(modifier, "");
+            return this.add();
+          }
+        }, {
+          key: "withAnyCase",
+          value: function withAnyCase() {
+            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+            return enable ? this.addModifier("i") : this.removeModifier("i");
+          }
+        }, {
+          key: "stopAtFirst",
+          value: function stopAtFirst() {
+            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+            return enable ? this.removeModifier("g") : this.addModifier("g");
+          }
+        }, {
+          key: "searchOneLine",
+          value: function searchOneLine() {
+            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+            return enable ? this.removeModifier("m") : this.addModifier("m");
+          }
+        }, {
+          key: "repeatPrevious",
+          value: function repeatPrevious() {
+            var isInteger = /\d+/;
+            for (var _len = arguments.length, quantity = Array(_len), _key = 0; _key < _len; _key++) {
+              quantity[_key] = arguments[_key];
+            }
+            var values = quantity.filter(function(argument) {
+              return isInteger.test(argument);
+            });
+            if (values.length === 0 || values.length > 2) {
+              return this;
+            }
+            this.add("{" + values.join(",") + "}");
+            return this;
+          }
+        }, {
+          key: "oneOrMore",
+          value: function oneOrMore() {
+            return this.add("+");
+          }
+        }, {
+          key: "multiple",
+          value: function multiple(value, lower, upper) {
+            if (value !== void 0) {
+              value = VerbalExpression2.sanitize(value);
+              this.add("(?:" + value + ")");
+            }
+            if (lower === void 0 && upper === void 0) {
+              this.add("*");
+            } else if (lower !== void 0 && upper === void 0) {
+              this.add("{" + lower + ",}");
+            } else if (lower !== void 0 && upper !== void 0) {
+              this.add("{" + lower + "," + upper + "}");
+            }
+            return this;
+          }
+        }, {
+          key: "beginCapture",
+          value: function beginCapture() {
+            this._suffixes += ")";
+            return this.add("(");
+          }
+        }, {
+          key: "endCapture",
+          value: function endCapture() {
+            this._suffixes = this._suffixes.slice(0, -1);
+            return this.add(")");
+          }
+        }, {
+          key: "replace",
+          value: function replace(source, value) {
+            source = source.toString();
+            return source.replace(this, value);
+          }
+        }, {
+          key: "toRegExp",
+          value: function toRegExp() {
+            var components = this.toString().match(/\/(.*)\/([gimuy]+)?/);
+            var pattern = components[1];
+            var flags = components[2];
+            return new RegExp(pattern, flags);
+          }
+        }], [{
+          key: "sanitize",
+          value: function sanitize(value) {
+            if (value instanceof RegExp) {
+              return value.source;
+            }
+            if (typeof value === "number") {
+              return value;
+            }
+            if (typeof value !== "string") {
+              return "";
+            }
+            var toEscape = /([\].|*?+(){}^$\\:=[])/g;
+            var lastMatch = "$&";
+            return value.replace(toEscape, "\\" + lastMatch);
+          }
+        }]);
+        return VerbalExpression2;
+      }(_extendableBuiltin(RegExp));
+      function VerEx8() {
+        var instance = new VerbalExpression();
+        instance.sanitize = VerbalExpression.sanitize;
+        return instance;
+      }
+      return VerEx8;
+    });
+  }
+});
+
 // node_modules/fs.realpath/old.js
 var require_old = __commonJS({
   "node_modules/fs.realpath/old.js"(exports) {
@@ -748,7 +1099,7 @@ var require_minimatch = __commonJS({
         if (pattern === "")
           return "";
         let re = "";
-        let hasMagic = !!options.nocase;
+        let hasMagic = false;
         let escaping = false;
         const patternListStack = [];
         const negativeLists = [];
@@ -759,7 +1110,10 @@ var require_minimatch = __commonJS({
         let cs;
         let pl;
         let sp;
-        const patternStart = pattern.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
+        let dotTravAllowed = pattern.charAt(0) === ".";
+        let dotFileAllowed = options.dot || dotTravAllowed;
+        const patternStart = () => dotTravAllowed ? "" : dotFileAllowed ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
+        const subPatternStart = (p) => p.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
         const clearStateChar = () => {
           if (stateChar) {
             switch (stateChar) {
@@ -823,7 +1177,7 @@ var require_minimatch = __commonJS({
               if (options.noext)
                 clearStateChar();
               continue;
-            case "(":
+            case "(": {
               if (inClass) {
                 re += "(";
                 continue;
@@ -832,39 +1186,54 @@ var require_minimatch = __commonJS({
                 re += "\\(";
                 continue;
               }
-              patternListStack.push({
+              const plEntry = {
                 type: stateChar,
                 start: i2 - 1,
                 reStart: re.length,
                 open: plTypes[stateChar].open,
                 close: plTypes[stateChar].close
-              });
-              re += stateChar === "!" ? "(?:(?!(?:" : "(?:";
+              };
+              this.debug(this.pattern, "	", plEntry);
+              patternListStack.push(plEntry);
+              re += plEntry.open;
+              if (plEntry.start === 0 && plEntry.type !== "!") {
+                dotTravAllowed = true;
+                re += subPatternStart(pattern.slice(i2 + 1));
+              }
               this.debug("plType %j %j", stateChar, re);
               stateChar = false;
               continue;
-            case ")":
-              if (inClass || !patternListStack.length) {
+            }
+            case ")": {
+              const plEntry = patternListStack[patternListStack.length - 1];
+              if (inClass || !plEntry) {
                 re += "\\)";
                 continue;
               }
+              patternListStack.pop();
               clearStateChar();
               hasMagic = true;
-              pl = patternListStack.pop();
+              pl = plEntry;
               re += pl.close;
               if (pl.type === "!") {
-                negativeLists.push(pl);
+                negativeLists.push(Object.assign(pl, { reEnd: re.length }));
               }
-              pl.reEnd = re.length;
               continue;
-            case "|":
-              if (inClass || !patternListStack.length) {
+            }
+            case "|": {
+              const plEntry = patternListStack[patternListStack.length - 1];
+              if (inClass || !plEntry) {
                 re += "\\|";
                 continue;
               }
               clearStateChar();
               re += "|";
+              if (plEntry.start === 0 && plEntry.type !== "!") {
+                dotTravAllowed = true;
+                re += subPatternStart(pattern.slice(i2 + 1));
+              }
               continue;
+            }
             case "[":
               clearStateChar();
               if (inClass) {
@@ -932,23 +1301,27 @@ var require_minimatch = __commonJS({
           const nlFirst = re.slice(nl.reStart, nl.reEnd - 8);
           let nlAfter = re.slice(nl.reEnd);
           const nlLast = re.slice(nl.reEnd - 8, nl.reEnd) + nlAfter;
-          const openParensBefore = nlBefore.split("(").length - 1;
+          const closeParensBefore = nlBefore.split(")").length;
+          const openParensBefore = nlBefore.split("(").length - closeParensBefore;
           let cleanAfter = nlAfter;
           for (let i2 = 0; i2 < openParensBefore; i2++) {
             cleanAfter = cleanAfter.replace(/\)[+*?]?/, "");
           }
           nlAfter = cleanAfter;
-          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "$" : "";
+          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "(?:$|\\/)" : "";
           re = nlBefore + nlFirst + nlAfter + dollar + nlLast;
         }
         if (re !== "" && hasMagic) {
           re = "(?=.)" + re;
         }
         if (addPatternStart) {
-          re = patternStart + re;
+          re = patternStart() + re;
         }
         if (isSub === SUBPARSE) {
           return [re, hasMagic];
+        }
+        if (options.nocase && !hasMagic) {
+          hasMagic = pattern.toUpperCase() !== pattern.toLowerCase();
         }
         if (!hasMagic) {
           return globUnescape(pattern);
@@ -1155,6 +1528,10 @@ var require_common = __commonJS({
         }
         pattern = "**/" + pattern;
       }
+      self.windowsPathsNoEscape = !!options.windowsPathsNoEscape || options.allowWindowsEscape === false;
+      if (self.windowsPathsNoEscape) {
+        pattern = pattern.replace(/\\/g, "/");
+      }
       self.silent = !!options.silent;
       self.pattern = pattern;
       self.strict = options.strict !== false;
@@ -1199,7 +1576,6 @@ var require_common = __commonJS({
       }
       options.nonegate = true;
       options.nocomment = true;
-      options.allowWindowsEscape = true;
       self.minimatch = new Minimatch(pattern, options);
       self.options = self.minimatch.options;
     }
@@ -1779,7 +2155,7 @@ var require_inflight = __commonJS({
 // node_modules/glob/glob.js
 var require_glob = __commonJS({
   "node_modules/glob/glob.js"(exports, module2) {
-    module2.exports = glob3;
+    module2.exports = glob2;
     var rp = require_fs();
     var minimatch = require_minimatch();
     var Minimatch = minimatch.Minimatch;
@@ -1797,7 +2173,7 @@ var require_glob = __commonJS({
     var childrenIgnored = common.childrenIgnored;
     var isIgnored = common.isIgnored;
     var once = require_once();
-    function glob3(pattern, options, cb) {
+    function glob2(pattern, options, cb) {
       if (typeof options === "function")
         cb = options, options = {};
       if (!options)
@@ -1809,9 +2185,9 @@ var require_glob = __commonJS({
       }
       return new Glob(pattern, options, cb);
     }
-    glob3.sync = globSync;
-    var GlobSync = glob3.GlobSync = globSync.GlobSync;
-    glob3.glob = glob3;
+    glob2.sync = globSync;
+    var GlobSync = glob2.GlobSync = globSync.GlobSync;
+    glob2.glob = glob2;
     function extend(origin, add) {
       if (add === null || typeof add !== "object") {
         return origin;
@@ -1823,7 +2199,7 @@ var require_glob = __commonJS({
       }
       return origin;
     }
-    glob3.hasMagic = function(pattern, options_) {
+    glob2.hasMagic = function(pattern, options_) {
       var options = extend({}, options_);
       options.noprocess = true;
       var g = new Glob(pattern, options);
@@ -1838,7 +2214,7 @@ var require_glob = __commonJS({
       }
       return false;
     };
-    glob3.Glob = Glob;
+    glob2.Glob = Glob;
     inherits(Glob, EE);
     function Glob(pattern, options, cb) {
       if (typeof options === "function") {
@@ -2331,357 +2707,6 @@ var require_glob = __commonJS({
   }
 });
 
-// node_modules/verbal-expressions/dist/verbalexpressions.js
-var require_verbalexpressions = __commonJS({
-  "node_modules/verbal-expressions/dist/verbalexpressions.js"(exports, module2) {
-    (function(root, factory) {
-      if (root === void 0 && window !== void 0)
-        root = window;
-      if (typeof define === "function" && define.amd) {
-        define("VerEx", [], function() {
-          return root["VerEx"] = factory();
-        });
-      } else if (typeof module2 === "object" && module2.exports) {
-        module2.exports = factory();
-      } else {
-        root["VerEx"] = factory();
-      }
-    })(exports, function() {
-      var _createClass = function() {
-        function defineProperties(target, props) {
-          for (var i2 = 0; i2 < props.length; i2++) {
-            var descriptor = props[i2];
-            descriptor.enumerable = descriptor.enumerable || false;
-            descriptor.configurable = true;
-            if ("value" in descriptor)
-              descriptor.writable = true;
-            Object.defineProperty(target, descriptor.key, descriptor);
-          }
-        }
-        return function(Constructor, protoProps, staticProps) {
-          if (protoProps)
-            defineProperties(Constructor.prototype, protoProps);
-          if (staticProps)
-            defineProperties(Constructor, staticProps);
-          return Constructor;
-        };
-      }();
-      function _classCallCheck(instance, Constructor) {
-        if (!(instance instanceof Constructor)) {
-          throw new TypeError("Cannot call a class as a function");
-        }
-      }
-      function _possibleConstructorReturn(self, call) {
-        if (!self) {
-          throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-        }
-        return call && (typeof call === "object" || typeof call === "function") ? call : self;
-      }
-      function _inherits(subClass, superClass) {
-        if (typeof superClass !== "function" && superClass !== null) {
-          throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-        }
-        subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } });
-        if (superClass)
-          Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-      }
-      function _extendableBuiltin(cls) {
-        function ExtendableBuiltin() {
-          var instance = Reflect.construct(cls, Array.from(arguments));
-          Object.setPrototypeOf(instance, Object.getPrototypeOf(this));
-          return instance;
-        }
-        ExtendableBuiltin.prototype = Object.create(cls.prototype, {
-          constructor: {
-            value: cls,
-            enumerable: false,
-            writable: true,
-            configurable: true
-          }
-        });
-        if (Object.setPrototypeOf) {
-          Object.setPrototypeOf(ExtendableBuiltin, cls);
-        } else {
-          ExtendableBuiltin.__proto__ = cls;
-        }
-        return ExtendableBuiltin;
-      }
-      var VerbalExpression = function(_extendableBuiltin2) {
-        _inherits(VerbalExpression2, _extendableBuiltin2);
-        function VerbalExpression2() {
-          _classCallCheck(this, VerbalExpression2);
-          var _this = _possibleConstructorReturn(this, (VerbalExpression2.__proto__ || Object.getPrototypeOf(VerbalExpression2)).call(this, "", "gm"));
-          _this._prefixes = "";
-          _this._source = "";
-          _this._suffixes = "";
-          _this._modifiers = "gm";
-          return _this;
-        }
-        _createClass(VerbalExpression2, [{
-          key: "add",
-          value: function add() {
-            var value = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : "";
-            this._source += value;
-            var pattern = this._prefixes + this._source + this._suffixes;
-            this.compile(pattern, this._modifiers);
-            return this;
-          }
-        }, {
-          key: "startOfLine",
-          value: function startOfLine() {
-            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
-            this._prefixes = enable ? "^" : "";
-            return this.add();
-          }
-        }, {
-          key: "endOfLine",
-          value: function endOfLine() {
-            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
-            this._suffixes = enable ? "$" : "";
-            return this.add();
-          }
-        }, {
-          key: "then",
-          value: function then(value) {
-            value = VerbalExpression2.sanitize(value);
-            return this.add("(?:" + value + ")");
-          }
-        }, {
-          key: "find",
-          value: function find(value) {
-            return this.then(value);
-          }
-        }, {
-          key: "maybe",
-          value: function maybe(value) {
-            value = VerbalExpression2.sanitize(value);
-            return this.add("(?:" + value + ")?");
-          }
-        }, {
-          key: "or",
-          value: function or(value) {
-            this._prefixes += "(?:";
-            this._suffixes = ")" + this._suffixes;
-            this.add(")|(?:");
-            if (value) {
-              this.then(value);
-            }
-            return this;
-          }
-        }, {
-          key: "anything",
-          value: function anything() {
-            return this.add("(?:.*)");
-          }
-        }, {
-          key: "anythingBut",
-          value: function anythingBut(value) {
-            if (Array.isArray(value)) {
-              value = value.join("");
-            }
-            value = VerbalExpression2.sanitize(value);
-            return this.add("(?:[^" + value + "]*)");
-          }
-        }, {
-          key: "something",
-          value: function something() {
-            return this.add("(?:.+)");
-          }
-        }, {
-          key: "somethingBut",
-          value: function somethingBut(value) {
-            if (Array.isArray(value)) {
-              value = value.join("");
-            }
-            value = VerbalExpression2.sanitize(value);
-            return this.add("(?:[^" + value + "]+)");
-          }
-        }, {
-          key: "anyOf",
-          value: function anyOf(value) {
-            if (Array.isArray(value)) {
-              value = value.join("");
-            }
-            value = VerbalExpression2.sanitize(value);
-            return this.add("[" + value + "]");
-          }
-        }, {
-          key: "any",
-          value: function any(value) {
-            return this.anyOf(value);
-          }
-        }, {
-          key: "not",
-          value: function not(value) {
-            value = VerbalExpression2.sanitize(value);
-            this.add("(?!" + value + ")");
-            return this;
-          }
-        }, {
-          key: "range",
-          value: function range() {
-            var value = "";
-            for (var i2 = 1; i2 < arguments.length; i2 += 2) {
-              var from = VerbalExpression2.sanitize(arguments.length <= i2 - 1 ? void 0 : arguments[i2 - 1]);
-              var to = VerbalExpression2.sanitize(arguments.length <= i2 ? void 0 : arguments[i2]);
-              value += from + "-" + to;
-            }
-            return this.add("[" + value + "]");
-          }
-        }, {
-          key: "lineBreak",
-          value: function lineBreak() {
-            return this.add("(?:\\r\\n|\\r|\\n)");
-          }
-        }, {
-          key: "br",
-          value: function br() {
-            return this.lineBreak();
-          }
-        }, {
-          key: "tab",
-          value: function tab() {
-            return this.add("\\t");
-          }
-        }, {
-          key: "word",
-          value: function word() {
-            return this.add("\\w+");
-          }
-        }, {
-          key: "digit",
-          value: function digit() {
-            return this.add("\\d");
-          }
-        }, {
-          key: "whitespace",
-          value: function whitespace() {
-            return this.add("\\s");
-          }
-        }, {
-          key: "addModifier",
-          value: function addModifier(modifier) {
-            if (!this._modifiers.includes(modifier)) {
-              this._modifiers += modifier;
-            }
-            return this.add();
-          }
-        }, {
-          key: "removeModifier",
-          value: function removeModifier(modifier) {
-            this._modifiers = this._modifiers.replace(modifier, "");
-            return this.add();
-          }
-        }, {
-          key: "withAnyCase",
-          value: function withAnyCase() {
-            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
-            return enable ? this.addModifier("i") : this.removeModifier("i");
-          }
-        }, {
-          key: "stopAtFirst",
-          value: function stopAtFirst() {
-            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
-            return enable ? this.removeModifier("g") : this.addModifier("g");
-          }
-        }, {
-          key: "searchOneLine",
-          value: function searchOneLine() {
-            var enable = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
-            return enable ? this.removeModifier("m") : this.addModifier("m");
-          }
-        }, {
-          key: "repeatPrevious",
-          value: function repeatPrevious() {
-            var isInteger = /\d+/;
-            for (var _len = arguments.length, quantity = Array(_len), _key = 0; _key < _len; _key++) {
-              quantity[_key] = arguments[_key];
-            }
-            var values = quantity.filter(function(argument) {
-              return isInteger.test(argument);
-            });
-            if (values.length === 0 || values.length > 2) {
-              return this;
-            }
-            this.add("{" + values.join(",") + "}");
-            return this;
-          }
-        }, {
-          key: "oneOrMore",
-          value: function oneOrMore() {
-            return this.add("+");
-          }
-        }, {
-          key: "multiple",
-          value: function multiple(value, lower, upper) {
-            if (value !== void 0) {
-              value = VerbalExpression2.sanitize(value);
-              this.add("(?:" + value + ")");
-            }
-            if (lower === void 0 && upper === void 0) {
-              this.add("*");
-            } else if (lower !== void 0 && upper === void 0) {
-              this.add("{" + lower + ",}");
-            } else if (lower !== void 0 && upper !== void 0) {
-              this.add("{" + lower + "," + upper + "}");
-            }
-            return this;
-          }
-        }, {
-          key: "beginCapture",
-          value: function beginCapture() {
-            this._suffixes += ")";
-            return this.add("(");
-          }
-        }, {
-          key: "endCapture",
-          value: function endCapture() {
-            this._suffixes = this._suffixes.slice(0, -1);
-            return this.add(")");
-          }
-        }, {
-          key: "replace",
-          value: function replace(source, value) {
-            source = source.toString();
-            return source.replace(this, value);
-          }
-        }, {
-          key: "toRegExp",
-          value: function toRegExp() {
-            var components = this.toString().match(/\/(.*)\/([gimuy]+)?/);
-            var pattern = components[1];
-            var flags = components[2];
-            return new RegExp(pattern, flags);
-          }
-        }], [{
-          key: "sanitize",
-          value: function sanitize(value) {
-            if (value instanceof RegExp) {
-              return value.source;
-            }
-            if (typeof value === "number") {
-              return value;
-            }
-            if (typeof value !== "string") {
-              return "";
-            }
-            var toEscape = /([\].|*?+(){}^$\\:=[])/g;
-            var lastMatch = "$&";
-            return value.replace(toEscape, "\\" + lastMatch);
-          }
-        }]);
-        return VerbalExpression2;
-      }(_extendableBuiltin(RegExp));
-      function VerEx9() {
-        var instance = new VerbalExpression();
-        instance.sanitize = VerbalExpression.sanitize;
-        return instance;
-      }
-      return VerEx9;
-    });
-  }
-});
-
 // node_modules/dedent/dist/dedent.js
 var require_dedent = __commonJS({
   "node_modules/dedent/dist/dedent.js"(exports, module2) {
@@ -2730,21 +2755,191 @@ var require_dedent = __commonJS({
 // src/index.js
 var src_exports = {};
 __export(src_exports, {
-  Regexes: () => Regexes
+  Features: () => Features
 });
 module.exports = __toCommonJS(src_exports);
+
+// src/modules/command.js
 var import_fs2 = __toESM(require("fs"), 1);
-var import_glob = __toESM(require_glob(), 1);
-var import_verbal_expressions8 = __toESM(require_verbalexpressions(), 1);
 var import_perf_hooks = require("perf_hooks");
 var import_child_process = require("child_process");
+
+// src/modules/postProcessing.js
+var import_verbal_expressions = __toESM(require_verbalexpressions(), 1);
+var import_glob = __toESM(require_glob(), 1);
+var import_fs = __toESM(require("fs"), 1);
+function ResolveFile(resourcePath, file) {
+  if (file.includes("*") > 0) {
+    return import_glob.default.sync(file, { cwd: resourcePath, absolute: true });
+  } else {
+    return resourcePath + "/" + file;
+  }
+}
+function PostProcess(resourceName, file, type, write = true) {
+  let fileData = type == "build" ? import_fs.default.readFileSync(file, "utf-8") : file;
+  for (let feature of Features) {
+    if (typeof feature.from == "string") {
+      fileData = fileData.replace(feature.from, feature.to);
+    } else {
+      feature.from.removeModifier("g");
+      let match5 = feature.from.test(fileData);
+      feature.from.addModifier("g");
+      if (match5) {
+        if (typeof feature.to == "string") {
+          fileData = fileData.replace(feature.from, feature.to);
+        } else {
+          fileData = feature.to(fileData);
+        }
+      }
+    }
+  }
+  if (type == "build") {
+    let outputFileDir = file.replace(resourceName, resourceName + "/build");
+    let outputDir = outputFileDir.replace((0, import_verbal_expressions.default)().word().then(".lua"), "");
+    import_fs.default.mkdirSync(outputDir, { recursive: true });
+    import_fs.default.writeFileSync(outputFileDir, fileData);
+  } else {
+    return fileData;
+  }
+}
+
+// src/modules/manifest.js
+function GetAllResourceMetadata(resourceName, key) {
+  let metadataNum = GetNumResourceMetadata(resourceName, key);
+  let result = [];
+  for (let i2 = 0; i2 < metadataNum; i2++) {
+    let metadata = GetResourceMetadata(resourceName, key, i2);
+    if (!metadata.includes("@") && !metadata.includes("--") && metadata.includes(".lua")) {
+      result.push(metadata);
+    }
+  }
+  return result;
+}
+
+// src/modules/string.js
+String.prototype.occurrences = function(string) {
+  let regex = new RegExp(string, "g");
+  return (this.match(regex) || []).length;
+};
 
 // config.js
 var Config = {};
 Config.Dev = true;
 
+// src/modules/command.js
+function EsbuildBuild() {
+  let resourceName = GetCurrentResourceName();
+  let path = GetResourcePath(resourceName);
+  (0, import_child_process.execSync)("npm run build", { cwd: path });
+}
+function GetAllScripts(resourceName) {
+  let files = [];
+  files = GetAllResourceMetadata(resourceName, "client_script");
+  files.push(...GetAllResourceMetadata(resourceName, "server_script"));
+  files.push(...GetAllResourceMetadata(resourceName, "files"));
+  return files;
+}
+function CreateCommand(name) {
+  RegisterCommand(name, async (source, args) => {
+    let [type, resourceName] = args;
+    if (source != 0)
+      return;
+    if (type == "rebuild" && !resourceName) {
+      EsbuildBuild();
+      console.log("^2Rebuilt^0");
+      return;
+    }
+    if (!type || !resourceName) {
+      console.log("parser restart <resource>");
+      console.log("parser build <resource>");
+      if (Config.Dev)
+        console.log("parser rebuild");
+      return;
+    }
+    let resourcePath = GetResourcePath(resourceName);
+    let start = import_perf_hooks.performance.now();
+    let files = GetAllScripts(resourceName);
+    let beforePostProcessing = {};
+    switch (type) {
+      case "build":
+        for (let file of files) {
+          let fileDirectory = ResolveFile(resourcePath, file);
+          if (typeof fileDirectory != "string") {
+            for (let fileDir of fileDirectory) {
+              PostProcess(resourceName, fileDir, type);
+            }
+          } else {
+            PostProcess(resourceName, fileDirectory, type);
+          }
+        }
+        break;
+      case "restart":
+        let startPreprocess = import_perf_hooks.performance.now();
+        let postProcessedFiles = {};
+        for (let file of files) {
+          let fileDirectory = ResolveFile(resourcePath, file);
+          if (typeof fileDirectory != "string") {
+            for (let fileDir of fileDirectory) {
+              let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
+              let postProcessed = PostProcess(resourceName, file2, type);
+              beforePostProcessing[fileDir] = file2;
+              postProcessedFiles[fileDir] = postProcessed;
+            }
+          } else {
+            let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
+            let postProcessed = PostProcess(resourceName, file2, type);
+            beforePostProcessing[fileDirectory] = file2;
+            postProcessedFiles[fileDirectory] = postProcessed;
+          }
+        }
+        let endPreprocess = import_perf_hooks.performance.now();
+        let doneWrite = [];
+        let keys = Object.keys(postProcessedFiles);
+        if (keys.length == 1) {
+          let fileDir = keys[0];
+          let file = postProcessedFiles[fileDir];
+          import_fs2.default.writeFileSync(fileDir, file);
+        } else {
+          let writing = new Promise((resolve) => {
+            for (let fileDir in postProcessedFiles) {
+              let file = postProcessedFiles[fileDir];
+              doneWrite.push(fileDir);
+              import_fs2.default.writeFile(fileDir, file, (err) => {
+                if (err)
+                  console.log(err);
+                else {
+                  let index = doneWrite.indexOf(fileDir);
+                  if (index > -1) {
+                    doneWrite.splice(index, 1);
+                  }
+                  if (doneWrite.length == 0) {
+                    resolve(true);
+                  }
+                }
+              });
+            }
+          });
+          await writing;
+        }
+        let endWriting = import_perf_hooks.performance.now();
+        console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
+        console.log("Writing runtime: ^3" + (endWriting - endPreprocess) + "^0ms");
+        break;
+    }
+    if (Config.Dev)
+      console.log("Post processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
+    if (type == "restart") {
+      StopResource(resourceName);
+      StartResource(resourceName);
+      for (let path in beforePostProcessing) {
+        import_fs2.default.writeFileSync(path, beforePostProcessing[path]);
+      }
+    }
+  }, true);
+}
+
 // src/features/arrowFunction.js
-var import_verbal_expressions = __toESM(require_verbalexpressions(), 1);
+var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
 
 // src/modules/linesManipulation.js
 function getLine(fileData, string) {
@@ -2779,12 +2974,6 @@ function sliceLine(string, lineStart, lineEnd) {
     return string.slice(charsStart, charsEnd);
   }
 }
-
-// src/modules/string.js
-String.prototype.occurrences = function(string) {
-  let regex = new RegExp(string, "g");
-  return (this.match(regex) || []).length;
-};
 
 // src/modules/functions.js
 function ReplaceFunctionEnding(string, linesAfterMatch, to = "end", opening = "{", closing = "}") {
@@ -2828,10 +3017,10 @@ function MatchAllRegex(string, regex) {
 }
 
 // src/features/arrowFunction.js
-var match = (0, import_verbal_expressions.default)().maybe(
-  (0, import_verbal_expressions.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")
+var match = (0, import_verbal_expressions2.default)().maybe(
+  (0, import_verbal_expressions2.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")
 ).maybe(
-  (0, import_verbal_expressions.default)().beginCapture().word().endCapture()
+  (0, import_verbal_expressions2.default)().beginCapture().word().endCapture()
 ).maybe(" ").then("=>").maybe(" ").then("{");
 var ArrowFunction = {
   from: match,
@@ -2840,9 +3029,9 @@ var ArrowFunction = {
     matches.map((x) => {
       [file] = ReplaceFunctionEnding(file, file.slice(x.index));
       match.removeModifier("g");
-      if (x[1]) {
+      if (x[1] != null) {
         file = file.replace(match, "function($1)");
-      } else if (x[2]) {
+      } else if (x[2] != null) {
         file = file.replace(match, "function($2)");
       }
       match.addModifier("g");
@@ -2859,9 +3048,9 @@ var NotEqual = {
 
 // src/features/classes.js
 var import_dedent = __toESM(require_dedent(), 1);
-var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
+var import_verbal_expressions3 = __toESM(require_verbalexpressions(), 1);
 function classIterator(fileData, matchIndices) {
-  const classFunctionTester = (0, import_verbal_expressions2.default)().find("function").maybe(" ").then("(");
+  const classFunctionTester = (0, import_verbal_expressions3.default)().find("function").maybe(" ").then("(").beginCapture().anythingBut(")").endCapture().then(")");
   let lines;
   for (let i2 of matchIndices) {
     let slicedFile = fileData.slice(i2);
@@ -2874,7 +3063,13 @@ function classIterator(fileData, matchIndices) {
     for (i2 in lines) {
       let line = lines[i2];
       if (!inFunction && classFunctionTester.test(line)) {
-        lines[i2] = line.replace(line.match(classFunctionTester), "function(self,");
+        classFunctionTester.lastIndex = 0;
+        let result = classFunctionTester.exec(line);
+        if (result[1].length > 0) {
+          lines[i2] = line.replace(classFunctionTester, "function(self, $1)");
+        } else {
+          lines[i2] = line.replace(classFunctionTester, "function(self)");
+        }
         countEnds = 1;
         inFunction = true;
       } else if (inFunction) {
@@ -2891,8 +3086,8 @@ function classIterator(fileData, matchIndices) {
   }
   return fileData;
 }
-var classMatch = (0, import_verbal_expressions2.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
-var classExtendsMatch = (0, import_verbal_expressions2.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").find("extends").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
+var classMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
+var classExtendsMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").find("extends").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
 var Class = {
   from: classMatch,
   to: function(file) {
@@ -2909,15 +3104,15 @@ var ClassExtends = {
     let matchIndices = MatchAllRegex(file, classExtendsMatch).map((x) => x.index);
     file = classIterator(file, matchIndices);
     return file.replace(classExtendsMatch, import_dedent.default`
-            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={}
+            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={
         `);
   }
 };
 
 // src/features/defaultValue.js
-var import_verbal_expressions3 = __toESM(require_verbalexpressions(), 1);
-var triggerMatch = (0, import_verbal_expressions3.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions3.default)().anythingBut(")")).beginCapture().then("(").anythingBut("()").then(")").endCapture();
-var extractDefaultValues = (0, import_verbal_expressions3.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
+var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
+var triggerMatch = (0, import_verbal_expressions4.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions4.default)().anythingBut(")")).beginCapture().then("(").anythingBut("()").then(")").endCapture();
+var extractDefaultValues = (0, import_verbal_expressions4.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
 var DefaultValue = {
   from: triggerMatch,
   to: function(file) {
@@ -2944,8 +3139,8 @@ var DefaultValue = {
 };
 
 // src/features/unpack.js
-var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
-var match2 = (0, import_verbal_expressions4.default)().find("...").not(",").not(")").not("}").beginCapture().anything().endCapture().endOfLine();
+var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
+var match2 = (0, import_verbal_expressions5.default)().find("...").not(",").not(")").not("}").beginCapture().anything().endCapture().endOfLine();
 var Unpack = {
   from: match2,
   to: function(file) {
@@ -2960,8 +3155,8 @@ var Unpack = {
 };
 
 // src/features/new.js
-var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
-var match3 = (0, import_verbal_expressions5.default)().find("new ").beginCapture().anythingBut("(").then("(").endCapture();
+var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
+var match3 = (0, import_verbal_expressions6.default)().find("new ").beginCapture().anythingBut("(").then("(").endCapture();
 var New = {
   from: match3,
   to: function(file) {
@@ -2970,18 +3165,18 @@ var New = {
 };
 
 // src/features/decorators.js
-var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
-var match4 = (0, import_verbal_expressions6.default)().beginCapture().find("@").word().maybe(
-  (0, import_verbal_expressions6.default)().find("(").anythingBut("()").find(")")
-).maybe((0, import_verbal_expressions6.default)().lineBreak()).endCapture().oneOrMore().maybe((0, import_verbal_expressions6.default)().lineBreak()).maybe(
-  (0, import_verbal_expressions6.default)().maybe(
-    (0, import_verbal_expressions6.default)().find("local").maybe(" ")
+var import_verbal_expressions7 = __toESM(require_verbalexpressions(), 1);
+var match4 = (0, import_verbal_expressions7.default)().beginCapture().find("@").word().maybe(
+  (0, import_verbal_expressions7.default)().find("(").anythingBut("()").find(")")
+).maybe((0, import_verbal_expressions7.default)().lineBreak()).endCapture().oneOrMore().maybe((0, import_verbal_expressions7.default)().lineBreak()).maybe(
+  (0, import_verbal_expressions7.default)().maybe(
+    (0, import_verbal_expressions7.default)().find("local").maybe(" ")
   ).beginCapture().word().endCapture().maybe(" ").find("=").maybe(" ")
 ).then("function").maybe(" ").maybe(
-  (0, import_verbal_expressions6.default)().beginCapture().anythingBut("(").endCapture()
+  (0, import_verbal_expressions7.default)().beginCapture().anythingBut("(").endCapture()
 ).then("(");
-var decoratorsVerEx = (0, import_verbal_expressions6.default)().find("@").beginCapture().word().endCapture().maybe(
-  (0, import_verbal_expressions6.default)().find("(").beginCapture().anythingBut("()").endCapture().find(")")
+var decoratorsVerEx = (0, import_verbal_expressions7.default)().find("@").beginCapture().word().endCapture().maybe(
+  (0, import_verbal_expressions7.default)().find("(").beginCapture().anythingBut("()").endCapture().find(")")
 );
 var Decorators = {
   from: match4,
@@ -3011,69 +3206,8 @@ var Decorators = {
   }
 };
 
-// src/modules/postProcessing.js
-var import_verbal_expressions7 = __toESM(require_verbalexpressions(), 1);
-var import_fs = __toESM(require("fs"), 1);
-var validWindowsPath = (0, import_verbal_expressions7.default)().startOfLine().range("a", "z", "A", "Z").find(":/").beginCapture().anythingBut("/").then("/").endCapture().oneOrMore();
-function ResolveFile(resourcePath, file) {
-  if (file.includes("*") > 0) {
-    return glob.sync(file, { cwd: resourcePath, absolute: true });
-  } else {
-    return resourcePath + "/" + file;
-  }
-}
-function PostProcess(resourceName, file, type, write = true) {
-  let fileData = void 0;
-  if (validWindowsPath.test(file)) {
-    fileData = import_fs.default.readFileSync(file, "utf-8");
-  } else {
-    fileData = file;
-  }
-  for (let regex of Regexes) {
-    if (typeof regex.from == "string") {
-      fileData = fileData.replace(regex.from, regex.to);
-    } else {
-      regex.from.removeModifier("g");
-      let match5 = regex.from.test(fileData);
-      regex.from.addModifier("g");
-      if (match5) {
-        if (typeof regex.to == "string") {
-          fileData = fileData.replace(regex.from, regex.to);
-        } else {
-          fileData = regex.to(fileData);
-        }
-      }
-    }
-  }
-  if (write) {
-    if (type == "build") {
-      let outputFileDir = file.replace(resourceName, resourceName + "/build");
-      let outputDir = outputFileDir.replace((0, import_verbal_expressions7.default)().word().then(".lua"), "");
-      import_fs.default.mkdirSync(outputDir, { recursive: true });
-      import_fs.default.writeFileSync(outputFileDir, fileData);
-    } else {
-      import_fs.default.writeFileSync(file, fileData);
-    }
-  } else {
-    return fileData;
-  }
-}
-
-// src/modules/manifest.js
-function GetAllResourceMetadata(resourceName, key) {
-  let metadataNum = GetNumResourceMetadata(resourceName, key);
-  let result = [];
-  for (let i2 = 0; i2 < metadataNum; i2++) {
-    let metadata = GetResourceMetadata(resourceName, key, i2);
-    if (!metadata.includes("@") && !metadata.includes("--") && metadata.includes(".lua")) {
-      result.push(metadata);
-    }
-  }
-  return result;
-}
-
 // src/index.js
-var Regexes = [
+var Features = [
   ArrowFunction,
   NotEqual,
   Class,
@@ -3083,105 +3217,10 @@ var Regexes = [
   New,
   Decorators
 ];
-function EsbuildBundle() {
-  let resourceName = GetCurrentResourceName();
-  let path = GetResourcePath(resourceName);
-  (0, import_child_process.execSync)("npm run build", { cwd: path });
-}
-function GetAllScripts(resourceName) {
-  let files = [];
-  files = GetAllResourceMetadata(resourceName, "client_script");
-  files.push(...GetAllResourceMetadata(resourceName, "server_script"));
-  files.push(...GetAllResourceMetadata(resourceName, "files"));
-  return files;
-}
-RegisterCommand("parser", async (source, args) => {
-  let [type, resourceName] = args;
-  if (source != 0)
-    return;
-  if (type == "rebundle" && !resourceName) {
-    EsbuildBundle();
-    console.log("^2Rebundled^0");
-    return;
-  }
-  if (!type || !resourceName) {
-    console.log("parser restart <resource>");
-    console.log("parser build <resource>");
-    if (Config.Dev)
-      console.log("parser rebundle");
-    return;
-  }
-  let resourcePath = GetResourcePath(resourceName);
-  let start = import_perf_hooks.performance.now();
-  let files = GetAllScripts();
-  let beforePostProcessing = {};
-  switch (type) {
-    case "build":
-      for (let file of files) {
-        let fileDirectory = ResolveFile(resourcePath, file);
-        if (typeof fileDirectory != "string") {
-          for (let fileDir of fileDirectory) {
-            PostProcess(resourceName, fileDir, type);
-          }
-        } else {
-          PostProcess(resourceName, fileDirectory, type);
-        }
-      }
-      break;
-    case "restart":
-      let postProcessedFiles = {};
-      for (let file of files) {
-        let fileDirectory = ResolveFile(resourcePath, file);
-        if (typeof fileDirectory != "string") {
-          for (let fileDir of fileDirectory) {
-            let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
-            let postProcessed = PostProcess(resourceName, file2, type, false);
-            beforePostProcessing[fileDir] = file2;
-            postProcessedFiles[fileDir] = postProcessed;
-          }
-        } else {
-          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
-          let postProcessed = PostProcess(resourceName, file2, type, false);
-          beforePostProcessing[fileDirectory] = file2;
-          postProcessedFiles[fileDirectory] = postProcessed;
-        }
-      }
-      let doneWrite = [];
-      let writing = new Promise((resolve) => {
-        for (let fileDir in postProcessedFiles) {
-          let file = postProcessedFiles[fileDir];
-          doneWrite.push(fileDir);
-          import_fs2.default.writeFile(fileDir, file, (err) => {
-            if (err)
-              console.log(err);
-            else {
-              let index = doneWrite.indexOf(fileDir);
-              if (index > -1) {
-                doneWrite.splice(index, 1);
-              }
-              if (doneWrite.length == 0) {
-                resolve(true);
-              }
-            }
-          });
-        }
-      });
-      await writing;
-      break;
-  }
-  if (Config.Dev)
-    console.log("Post processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
-  if (type == "restart") {
-    StopResource(resourceName);
-    StartResource(resourceName);
-    for (let path in beforePostProcessing) {
-      import_fs2.default.writeFileSync(path, beforePostProcessing[path]);
-    }
-  }
-}, true);
+CreateCommand("parser");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  Regexes
+  Features
 });
 /*! Bundled license information:
 

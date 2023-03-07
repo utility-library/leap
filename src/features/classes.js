@@ -6,7 +6,15 @@ import { MatchAllRegex } from "../modules/regex";
 import "../modules/string"
 
 function classIterator(fileData, matchIndices) {
-    const classFunctionTester = VerEx().find("function").maybe(" ").then("(")
+    const classFunctionTester = VerEx()
+        .find("function")
+        .maybe(" ")
+        .then("(")
+        .beginCapture()
+            .anythingBut(")")
+        .endCapture()
+        .then(")")
+
     let lines;
 
     for (let i of matchIndices) {
@@ -25,7 +33,14 @@ function classIterator(fileData, matchIndices) {
             let line = lines[i]
             
             if (!inFunction && classFunctionTester.test(line)) {
-                lines[i] = line.replace(line.match(classFunctionTester), "function(self,")
+                classFunctionTester.lastIndex = 0; // reset
+                let result = classFunctionTester.exec(line)
+
+                if (result[1].length > 0) {
+                    lines[i] = line.replace(classFunctionTester, "function(self, $1)")
+                } else {
+                    lines[i] = line.replace(classFunctionTester, "function(self)")
+                }
                 
                 countEnds = 1;
                 inFunction = true;
@@ -143,7 +158,7 @@ let ClassExtends = {
         */
 
         return file.replace(classExtendsMatch, dedent`
-            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={}
+            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={
         `)
     }
 }
