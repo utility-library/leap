@@ -5,9 +5,8 @@ let match = VerEx()
     .find("...")
     .not(",").not(")").not("}")
     .beginCapture()
-        .anything()
+        .word()
     .endCapture()
-    .endOfLine()
 
 let Unpack = {
     from: match,
