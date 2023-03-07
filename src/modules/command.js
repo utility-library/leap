@@ -5,12 +5,12 @@ import { execSync } from 'child_process'
 //#endregion
 
 //#region Modules
-import { PostProcess, ResolveFile } from './modules/postProcessing'
-import { GetAllResourceMetadata } from "./modules/manifest.js"
-import "./modules/string"
+import { PostProcess, ResolveFile } from '../modules/postProcessing'
+import { GetAllResourceMetadata } from "../modules/manifest.js"
+import "../modules/string"
 //#endregion
 
-import { Config } from "../config"
+import { Config } from "../../config"
 
 //#region Functions
 function EsbuildBuild() {
@@ -31,7 +31,7 @@ function GetAllScripts(resourceName) {
 }
 //#endregion
 
-CreateCommand = function(name) {
+function CreateCommand(name) {
     RegisterCommand(name, async (source, args) => {
         let [type, resourceName] = args
     
@@ -53,7 +53,7 @@ CreateCommand = function(name) {
     
         let resourcePath = GetResourcePath(resourceName)
         let start = performance.now()
-        let files = GetAllScripts()
+        let files = GetAllScripts(resourceName)
         let beforePostProcessing = {}
     
         switch(type) {
@@ -72,6 +72,7 @@ CreateCommand = function(name) {
     
                 break;
             case "restart":
+                let startPreprocess = performance.now()
                 let postProcessedFiles = {}
     
                 for (let file of files) {
@@ -82,45 +83,62 @@ CreateCommand = function(name) {
                     if (typeof fileDirectory != "string") {
                         for (let fileDir of fileDirectory) {
                             let file = fs.readFileSync(fileDir, "utf-8")
-                            let postProcessed = PostProcess(resourceName, file, type, false)
+                            let postProcessed = PostProcess(resourceName, file, type)
     
                             beforePostProcessing[fileDir] = file
                             postProcessedFiles[fileDir] = postProcessed
                         }
                     } else {
                         let file = fs.readFileSync(fileDirectory, "utf-8")
-                        let postProcessed = PostProcess(resourceName, file, type, false)
+                        let postProcessed = PostProcess(resourceName, file, type)
     
                         beforePostProcessing[fileDirectory] = file
                         postProcessedFiles[fileDirectory] = postProcessed
                     }
                 }
     
+                let endPreprocess = performance.now()
+                
                 let doneWrite = []
     
-                let writing = new Promise((resolve) => {
-                    for (let fileDir in postProcessedFiles) {
-                        let file = postProcessedFiles[fileDir]
-    
-                        doneWrite.push(fileDir)
-                        fs.writeFile(fileDir, file, (err) => {
-                            if (err) 
-                                console.log(err)
-                            else {
-                                let index = doneWrite.indexOf(fileDir)
-                                if (index > -1) {
-                                    doneWrite.splice(index, 1)
+                //console.log("Started writing")
+                //console.log(postProcessedFiles)
+                let keys = Object.keys(postProcessedFiles)
+
+                if (keys.length == 1) {
+                    let fileDir = keys[0]
+                    let file = postProcessedFiles[fileDir]
+                    fs.writeFileSync(fileDir, file)
+                } else {
+                    let writing = new Promise((resolve) => {
+                        for (let fileDir in postProcessedFiles) {
+                            let file = postProcessedFiles[fileDir]
+        
+                            doneWrite.push(fileDir)
+                            fs.writeFile(fileDir, file, (err) => {
+                                if (err) 
+                                    console.log(err)
+                                else {
+                                    let index = doneWrite.indexOf(fileDir)
+                                    if (index > -1) {
+                                        doneWrite.splice(index, 1)
+                                    }
+        
+                                    if (doneWrite.length == 0) {    
+                                        resolve(true)
+                                    }
                                 }
-    
-                                if (doneWrite.length == 0) {    
-                                    resolve(true)
-                                }
-                            }
-                        })
-                    }
-                })
-    
-                await writing;
+                            })
+                        }
+                    })
+        
+                    await writing;
+                }
+
+                let endWriting = performance.now()
+                
+                console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
+                console.log("Writing runtime: ^3"+(endWriting - endPreprocess)+"^0ms")
                 break;
         }
     
