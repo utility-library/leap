@@ -18,7 +18,7 @@ After preprocessing the files, [**FiveM**](https://fivem.net) will read the file
 ### leap restart
 `leap restart <resource>` restarts the resource by preprocessing it before restarting it using *shadow writing*, this command is quite useful when creating a resource, since you don't have to rebuild it every time and restart the resource but it's like everything in one command.
 
-**TIP**: these commands can also be used in the cfg after the Leap startup.
+**TIP**: these commands can also be used in the cfg after the leap startup.
 
 ---
 
