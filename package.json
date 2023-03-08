@@ -2,7 +2,6 @@
   "name": "leap",
   "version": "1.0.0",
   "description": "Pre-processor of a \"modernized\" and extended version of lua that pre-processes in pure executable lua. Mainly intended for FiveM",
-  "authors": "XenoS, MrFreex",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -14,8 +13,8 @@
     "url": "git+https://github.com/utility-library/Leap.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "authors": "XenoS, MrFreex",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/utility-library/Leap/issues"
   },
