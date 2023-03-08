@@ -2,14 +2,19 @@ name: Esbuild rebuild
 
 on:
   push:
-    branches: [ "main" ]
+    paths: 
+      - 'src/**'
   pull_request:
-    branches: [ "main" ]
+    paths: 
+      - 'src/**'
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     strategy:
       matrix:
@@ -17,10 +22,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
+      with:
+        ref: ${{ github.head_ref }}
+    - name: Setup node 
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build
+        
+    - name: Clean dependencies installation
+      run: npm ci
+      
+    - name: Esbuild rebuild
+      run: npm run build
+      
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Esbuild rebuild
