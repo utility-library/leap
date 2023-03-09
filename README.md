@@ -261,3 +261,10 @@ console.log(number1, number2, number3)
     100    200    300
 ]]
 ```
+
+# Building leap
+as first thing, thank you for coming down this far and thus wanting to contribute to leap development :heart:.
+
+To develop leap you just need to download or clone the repository and edit the files inside the `src` folder, the files are divided by feature and by supporting modules, the `out.js` file is the output file after building everything with the `npm run build` command or on the server `leap rebuild`.
+We use [esbuild](https://esbuild.github.io) since fivem (from what we have tested and understood) doesnt support ES (ECMAScript) or just doesnt support the import declaration.
+after building everything you just need to rebuild the resource and build or restart with leap the interested resource.
