@@ -1,5 +1,6 @@
 import VerEx from "verbal-expressions";
 import { ReplaceFunctionEnding } from "../modules/functions";
+import { getLine } from "../modules/linesManipulation";
 import { MatchAllRegex } from "../modules/regex";
 
 let match = VerEx()
@@ -25,12 +26,12 @@ let match = VerEx()
 
 let ArrowFunction = {
     from: match,
-    to: function(file) {
+    to: function(originalFile) {
+        let file = originalFile
         let matches = MatchAllRegex(file, match);
-
         // replace all closing tags from "}" to "end"
         matches.map(x => {
-            [file] = ReplaceFunctionEnding(file, file.slice(x.index))
+            [file] = ReplaceFunctionEnding(file,file.split("\n").slice(getLine(originalFile, x.index)).join("\n"))
 
             match.removeModifier("g") // we want to replace it once, so later, if necessary, we can replace the one without parentheses with the correct capture group
 

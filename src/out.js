@@ -1099,7 +1099,7 @@ var require_minimatch = __commonJS({
         if (pattern === "")
           return "";
         let re = "";
-        let hasMagic = !!options.nocase;
+        let hasMagic = false;
         let escaping = false;
         const patternListStack = [];
         const negativeLists = [];
@@ -1110,7 +1110,10 @@ var require_minimatch = __commonJS({
         let cs;
         let pl;
         let sp;
-        const patternStart = pattern.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
+        let dotTravAllowed = pattern.charAt(0) === ".";
+        let dotFileAllowed = options.dot || dotTravAllowed;
+        const patternStart = () => dotTravAllowed ? "" : dotFileAllowed ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
+        const subPatternStart = (p) => p.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
         const clearStateChar = () => {
           if (stateChar) {
             switch (stateChar) {
@@ -1174,7 +1177,7 @@ var require_minimatch = __commonJS({
               if (options.noext)
                 clearStateChar();
               continue;
-            case "(":
+            case "(": {
               if (inClass) {
                 re += "(";
                 continue;
@@ -1183,39 +1186,54 @@ var require_minimatch = __commonJS({
                 re += "\\(";
                 continue;
               }
-              patternListStack.push({
+              const plEntry = {
                 type: stateChar,
                 start: i2 - 1,
                 reStart: re.length,
                 open: plTypes[stateChar].open,
                 close: plTypes[stateChar].close
-              });
-              re += stateChar === "!" ? "(?:(?!(?:" : "(?:";
+              };
+              this.debug(this.pattern, "	", plEntry);
+              patternListStack.push(plEntry);
+              re += plEntry.open;
+              if (plEntry.start === 0 && plEntry.type !== "!") {
+                dotTravAllowed = true;
+                re += subPatternStart(pattern.slice(i2 + 1));
+              }
               this.debug("plType %j %j", stateChar, re);
               stateChar = false;
               continue;
-            case ")":
-              if (inClass || !patternListStack.length) {
+            }
+            case ")": {
+              const plEntry = patternListStack[patternListStack.length - 1];
+              if (inClass || !plEntry) {
                 re += "\\)";
                 continue;
               }
+              patternListStack.pop();
               clearStateChar();
               hasMagic = true;
-              pl = patternListStack.pop();
+              pl = plEntry;
               re += pl.close;
               if (pl.type === "!") {
-                negativeLists.push(pl);
+                negativeLists.push(Object.assign(pl, { reEnd: re.length }));
               }
-              pl.reEnd = re.length;
               continue;
-            case "|":
-              if (inClass || !patternListStack.length) {
+            }
+            case "|": {
+              const plEntry = patternListStack[patternListStack.length - 1];
+              if (inClass || !plEntry) {
                 re += "\\|";
                 continue;
               }
               clearStateChar();
               re += "|";
+              if (plEntry.start === 0 && plEntry.type !== "!") {
+                dotTravAllowed = true;
+                re += subPatternStart(pattern.slice(i2 + 1));
+              }
               continue;
+            }
             case "[":
               clearStateChar();
               if (inClass) {
@@ -1283,23 +1301,27 @@ var require_minimatch = __commonJS({
           const nlFirst = re.slice(nl.reStart, nl.reEnd - 8);
           let nlAfter = re.slice(nl.reEnd);
           const nlLast = re.slice(nl.reEnd - 8, nl.reEnd) + nlAfter;
-          const openParensBefore = nlBefore.split("(").length - 1;
+          const closeParensBefore = nlBefore.split(")").length;
+          const openParensBefore = nlBefore.split("(").length - closeParensBefore;
           let cleanAfter = nlAfter;
           for (let i2 = 0; i2 < openParensBefore; i2++) {
             cleanAfter = cleanAfter.replace(/\)[+*?]?/, "");
           }
           nlAfter = cleanAfter;
-          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "$" : "";
+          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "(?:$|\\/)" : "";
           re = nlBefore + nlFirst + nlAfter + dollar + nlLast;
         }
         if (re !== "" && hasMagic) {
           re = "(?=.)" + re;
         }
         if (addPatternStart) {
-          re = patternStart + re;
+          re = patternStart() + re;
         }
         if (isSub === SUBPARSE) {
           return [re, hasMagic];
+        }
+        if (options.nocase && !hasMagic) {
+          hasMagic = pattern.toUpperCase() !== pattern.toLowerCase();
         }
         if (!hasMagic) {
           return globUnescape(pattern);
@@ -1506,6 +1528,10 @@ var require_common = __commonJS({
         }
         pattern = "**/" + pattern;
       }
+      self.windowsPathsNoEscape = !!options.windowsPathsNoEscape || options.allowWindowsEscape === false;
+      if (self.windowsPathsNoEscape) {
+        pattern = pattern.replace(/\\/g, "/");
+      }
       self.silent = !!options.silent;
       self.pattern = pattern;
       self.strict = options.strict !== false;
@@ -1550,7 +1576,6 @@ var require_common = __commonJS({
       }
       options.nonegate = true;
       options.nocomment = true;
-      options.allowWindowsEscape = true;
       self.minimatch = new Minimatch(pattern, options);
       self.options = self.minimatch.options;
     }
@@ -2999,10 +3024,11 @@ var match = (0, import_verbal_expressions2.default)().maybe(
 ).maybe(" ").then("=>").maybe(" ").then("{");
 var ArrowFunction = {
   from: match,
-  to: function(file) {
+  to: function(originalFile) {
+    let file = originalFile;
     let matches = MatchAllRegex(file, match);
     matches.map((x) => {
-      [file] = ReplaceFunctionEnding(file, file.slice(x.index));
+      [file] = ReplaceFunctionEnding(file, file.split("\n").slice(getLine(originalFile, x.index)).join("\n"));
       match.removeModifier("g");
       if (x[1] != null) {
         file = file.replace(match, "function($1)");
