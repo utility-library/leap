@@ -25,7 +25,7 @@ function classIterator(fileData, matchIndices) {
         lines = classBody.split("\n");
 
         let inFunction = false;
-        let opening = ["if", "function", "while", "for"]
+        let opening = ["if.*then\n", "function *\\(", "while.*do\n", "for.*do\n"]
         let countEnds = 1;
 
         // self injection in the functions arguments
@@ -35,7 +35,7 @@ function classIterator(fileData, matchIndices) {
             if (!inFunction && classFunctionTester.test(line)) {
                 classFunctionTester.lastIndex = 0; // reset
                 let result = classFunctionTester.exec(line)
-
+                
                 if (result[1].length > 0) {
                     lines[i] = line.replace(classFunctionTester, "function(self, $1)")
                 } else {
