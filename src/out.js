@@ -3034,7 +3034,7 @@ function classIterator(fileData, matchIndices) {
     let classBody = sliceLine(fileData, startLine, endLine + 1);
     lines = classBody.split("\n");
     let inFunction = false;
-    let opening = ["if", "function", "while", "for"];
+    let opening = ["if.*then\n", "function *\\(", "while.*do\n", "for.*do\n"];
     let countEnds = 1;
     for (i2 in lines) {
       let line = lines[i2];
