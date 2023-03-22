@@ -198,7 +198,7 @@ print(multiply(5))
 
 ### New
 The new operator lets create an instance of an object.
-Is actually converted during the preprocessing process with an empty string, so it is simply eliminated.
+Is actually converted during the preprocessing process with empty,so it is simply eliminated.
 Its use is simply to make it clear in the code when you are instantiating an object or calling a function
 
 Syntax:  
@@ -267,4 +267,4 @@ as first thing, thank you for coming down this far and thus wanting to contribut
 
 To develop leap you just need to download or clone the repository and edit the files inside the `src` folder, the files are divided by feature and by supporting modules, the `out.js` file is the output file after building everything with the `npm run build` command or on the server `leap rebuild`.
 We use [esbuild](https://esbuild.github.io) since fivem (from what we have tested and understood) doesnt support ES (ECMAScript) or just doesnt support the import declaration.
-after building everything you just need to rebuild the resource and build or restart with leap the interested resource.
+after building everything and restarted leap you just need to build or restart with leap the interested resource.
