@@ -6,6 +6,8 @@ function getLine(fileData, string) {
     
         if (match) {
             return match.length + 1
+        } else {
+            return 1
         }
     } else {
         return fileData.substr(0, string).match(/\n/gi).length
