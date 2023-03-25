@@ -1261,7 +1261,7 @@ var require_minimatch = __commonJS({
           let tail;
           tail = re.slice(pl.reStart + pl.open.length);
           this.debug("setting tail", re, pl);
-          tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, (_, $1, $2) => {
+          tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, (_2, $1, $2) => {
             if (!$2) {
               $2 = "\\";
             }
@@ -2924,6 +2924,8 @@ function getLine(fileData, string) {
     let match5 = fileData.match(/\n/gi);
     if (match5) {
       return match5.length + 1;
+    } else {
+      return 1;
     }
   } else {
     return fileData.substr(0, string).match(/\n/gi).length;
@@ -3030,7 +3032,7 @@ function classIterator(fileData, matchIndices) {
   let lines;
   for (let i2 of matchIndices) {
     let slicedFile = fileData.slice(i2);
-    [fileData, startLine, endLine] = ReplaceFunctionEnding(fileData, slicedFile, null);
+    [_, startLine, endLine] = ReplaceFunctionEnding(fileData, slicedFile, null);
     let classBody = sliceLine(fileData, startLine, endLine + 1);
     lines = classBody.split("\n");
     let inFunction = false;
@@ -3163,7 +3165,7 @@ var Decorators = {
       let decorators = MatchAllRegex(match5[0], decoratorsVerEx);
       let line = getLine(file, match5[0]);
       let slicedFile = sliceLine(file, line + decorators.length);
-      let [_, startLine2, endLine2] = ReplaceFunctionEnding(file, slicedFile, null, ["if", "function", "while", "for"], "end");
+      let [_2, startLine2, endLine2] = ReplaceFunctionEnding(file, slicedFile, null, ["if", "function", "while", "for"], "end");
       startLine2 -= decorators.length;
       let functionContent = sliceLine(file, startLine2, endLine2 + 1);
       functionContent = functionContent.slice(0, -2);
