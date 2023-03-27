@@ -1,4 +1,4 @@
-import { CreateCommand } from "./modules/command"
+import { CreateCommand, Command } from "./modules/command"
 
 //#region Features
 import { ArrowFunction } from "./features/arrowFunction"
@@ -22,5 +22,31 @@ let Features = [
 ]
 
 CreateCommand("leap")
+
+
+let leapBuildTask = {
+    shouldBuild(res) {
+        const nDependency = GetNumResourceMetadata(res, 'dependency');
+
+        if (nDependency > 0) {
+            for (let i = 0; i < nDependency; i++) {
+                const dependencyName = GetResourceMetadata(res, 'dependency');
+
+                if (dependencyName == "leap") {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    },
+    async build(res, cb) {
+        await Command(0, "restart "+res)
+        cb(true)
+    }
+}
+
+RegisterResourceBuildTaskFactory("leap", () => leapBuildTask)
+
 
 export {Features}

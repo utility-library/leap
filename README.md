@@ -5,8 +5,29 @@ Think of it as an effective "modernity" leap into the future to make lua a featu
 
 Leap is inspired by the functionality and syntax found in [JS](https://www.javascript.com) and is primarily intended for [**FiveM**](https://fivem.net), this however does not deny the possibility of extension to wider horizons.
 
-### Shadow writing
+## Usage
+To use leap you can simply download it and use its functions within the resource at your choice (you will need to add leap between the resource's dependencies), when the resource will start leap will take the job of preprocessing the necessary files.
 
+Example:
+`your_resource_that_use_leap > fxmanifest.lua`:
+```lua
+fx_version "cerulean"
+game "gta5"
+
+server_script "server.lua"
+
+dependency "leap" -- This is necessary to have the resource automatically preprocessed
+```
+
+You can also directly use the `leap restart your_resource_that_use_leap` command to preprocess the file directly with shadow writing.
+
+### Escrow
+
+To use leap on the escrow or outside the leap ecosystem you can make leap build the files into a standalone version with the command `leap build your_resource_that_use_leap`
+
+
+## Under the hood
+### Shadow writing
 Leap uses a **shadow writing** system (*we called it that*) that works in the following way:
 After preprocessing the files, [**FiveM**](https://fivem.net) will read the files, cache them and start the resource with those cached files as soon as we start the resource, we instantly rewrite the old files so that it looks like nothing happened. This will be done in very few ms (5/10), so from [VSC](https://code.visualstudio.com) or any other IDE that has the auto refresh feature when updating a file it will look like it was never overwritten
 
