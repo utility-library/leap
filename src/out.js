@@ -8,8 +8,8 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -2072,8 +2072,8 @@ var require_once = __commonJS({
         f.called = true;
         return f.value = fn.apply(this, arguments);
       };
-      var name = fn.name || "Function wrapped with `once`";
-      f.onceError = name + " shouldn't be called more than once";
+      var name2 = fn.name || "Function wrapped with `once`";
+      f.onceError = name2 + " shouldn't be called more than once";
       f.called = false;
       return f;
     }
@@ -2814,103 +2814,105 @@ function GetAllScripts(resourceName) {
   files.push(...GetAllResourceMetadata(resourceName, "files"));
   return files;
 }
-function CreateCommand(name) {
-  RegisterCommand(name, async (source, args) => {
-    let [type, resourceName] = args;
-    if (source != 0)
-      return;
-    if (type == "rebuild" && !resourceName) {
-      EsbuildBuild();
-      console.log("^2Rebuilt^0");
-      return;
-    }
-    if (!type || !resourceName) {
-      console.log(`${name} restart <resource>`);
-      console.log(`${name} build <resource>`);
-      if (Config.Dev)
-        console.log(`${name} rebuild`);
-      return;
-    }
-    let resourcePath = GetResourcePath(resourceName);
-    let start = import_perf_hooks.performance.now();
-    let files = GetAllScripts(resourceName);
-    let beforePostProcessing = {};
-    switch (type) {
-      case "build":
-        for (let file of files) {
-          let fileDirectory = ResolveFile(resourcePath, file);
-          if (typeof fileDirectory != "string") {
-            for (let fileDir of fileDirectory) {
-              PostProcess(resourceName, fileDir, type);
-            }
-          } else {
-            PostProcess(resourceName, fileDirectory, type);
-          }
-        }
-        break;
-      case "restart":
-        let startPreprocess = import_perf_hooks.performance.now();
-        let postProcessedFiles = {};
-        for (let file of files) {
-          let fileDirectory = ResolveFile(resourcePath, file);
-          if (typeof fileDirectory != "string") {
-            for (let fileDir of fileDirectory) {
-              let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
-              let postProcessed = PostProcess(resourceName, file2, type);
-              beforePostProcessing[fileDir] = file2;
-              postProcessedFiles[fileDir] = postProcessed;
-            }
-          } else {
-            let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
-            let postProcessed = PostProcess(resourceName, file2, type);
-            beforePostProcessing[fileDirectory] = file2;
-            postProcessedFiles[fileDirectory] = postProcessed;
-          }
-        }
-        let endPreprocess = import_perf_hooks.performance.now();
-        let doneWrite = [];
-        let keys = Object.keys(postProcessedFiles);
-        if (keys.length == 1) {
-          let fileDir = keys[0];
-          let file = postProcessedFiles[fileDir];
-          import_fs2.default.writeFileSync(fileDir, file);
-        } else {
-          let writing = new Promise((resolve) => {
-            for (let fileDir in postProcessedFiles) {
-              let file = postProcessedFiles[fileDir];
-              doneWrite.push(fileDir);
-              import_fs2.default.writeFile(fileDir, file, (err) => {
-                if (err)
-                  console.log(err);
-                else {
-                  let index = doneWrite.indexOf(fileDir);
-                  if (index > -1) {
-                    doneWrite.splice(index, 1);
-                  }
-                  if (doneWrite.length == 0) {
-                    resolve(true);
-                  }
-                }
-              });
-            }
-          });
-          await writing;
-        }
-        let endWriting = import_perf_hooks.performance.now();
-        console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
-        console.log("Writing runtime: ^3" + (endWriting - endPreprocess) + "^0ms");
-        break;
-    }
+async function Command(source, args) {
+  let [type, resourceName] = args;
+  if (source != 0)
+    return;
+  if (type == "rebuild" && !resourceName) {
+    EsbuildBuild();
+    console.log("^2Rebuilt^0");
+    return;
+  }
+  if (!type || !resourceName) {
+    console.log(`${name} restart <resource>`);
+    console.log(`${name} build <resource>`);
     if (Config.Dev)
-      console.log("Pre processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
-    if (type == "restart") {
-      StopResource(resourceName);
-      StartResource(resourceName);
-      for (let path in beforePostProcessing) {
-        import_fs2.default.writeFileSync(path, beforePostProcessing[path]);
+      console.log(`${name} rebuild`);
+    return;
+  }
+  let resourcePath = GetResourcePath(resourceName);
+  let start = import_perf_hooks.performance.now();
+  let files = GetAllScripts(resourceName);
+  let beforePostProcessing = {};
+  switch (type) {
+    case "build":
+      for (let file of files) {
+        let fileDirectory = ResolveFile(resourcePath, file);
+        if (typeof fileDirectory != "string") {
+          for (let fileDir of fileDirectory) {
+            PostProcess(resourceName, fileDir, type);
+          }
+        } else {
+          PostProcess(resourceName, fileDirectory, type);
+        }
       }
+      break;
+    case "restart":
+      let startPreprocess = import_perf_hooks.performance.now();
+      let postProcessedFiles = {};
+      for (let file of files) {
+        let fileDirectory = ResolveFile(resourcePath, file);
+        if (typeof fileDirectory != "string") {
+          for (let fileDir of fileDirectory) {
+            let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
+            let postProcessed = PostProcess(resourceName, file2, type);
+            beforePostProcessing[fileDir] = file2;
+            postProcessedFiles[fileDir] = postProcessed;
+          }
+        } else {
+          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
+          let postProcessed = PostProcess(resourceName, file2, type);
+          beforePostProcessing[fileDirectory] = file2;
+          postProcessedFiles[fileDirectory] = postProcessed;
+        }
+      }
+      let endPreprocess = import_perf_hooks.performance.now();
+      let doneWrite = [];
+      let keys = Object.keys(postProcessedFiles);
+      if (keys.length == 1) {
+        let fileDir = keys[0];
+        let file = postProcessedFiles[fileDir];
+        import_fs2.default.writeFileSync(fileDir, file);
+      } else {
+        let writing = new Promise((resolve) => {
+          for (let fileDir in postProcessedFiles) {
+            let file = postProcessedFiles[fileDir];
+            doneWrite.push(fileDir);
+            import_fs2.default.writeFile(fileDir, file, (err) => {
+              if (err)
+                console.log(err);
+              else {
+                let index = doneWrite.indexOf(fileDir);
+                if (index > -1) {
+                  doneWrite.splice(index, 1);
+                }
+                if (doneWrite.length == 0) {
+                  resolve(true);
+                }
+              }
+            });
+          }
+        });
+        await writing;
+      }
+      let endWriting = import_perf_hooks.performance.now();
+      console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
+      console.log("Writing runtime: ^3" + (endWriting - endPreprocess) + "^0ms");
+      break;
+  }
+  if (Config.Dev)
+    console.log("Pre processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
+  if (type == "restart") {
+    StopResource(resourceName);
+    StartResource(resourceName);
+    for (let path in beforePostProcessing) {
+      import_fs2.default.writeFileSync(path, beforePostProcessing[path]);
     }
-  }, true);
+    return true;
+  }
+}
+function CreateCommand(name2) {
+  RegisterCommand(name2, Command, true);
 }
 
 // src/features/arrowFunction.js
@@ -3197,6 +3199,25 @@ var Features = [
   Decorators
 ];
 CreateCommand("leap");
+var leapBuildTask = {
+  shouldBuild(res) {
+    const nDependency = GetNumResourceMetadata(res, "dependency");
+    if (nDependency > 0) {
+      for (let i2 = 0; i2 < nDependency; i2++) {
+        const dependencyName = GetResourceMetadata(res, "dependency");
+        if (dependencyName == "leap") {
+          return true;
+        }
+      }
+    }
+    return false;
+  },
+  async build(res, cb) {
+    await Command(0, "restart " + res);
+    cb(true);
+  }
+};
+RegisterResourceBuildTaskFactory("leap", () => leapBuildTask);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Features
