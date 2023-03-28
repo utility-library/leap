@@ -2815,7 +2815,7 @@ function GetAllScripts(resourceName) {
   return files;
 }
 async function Command(source, args) {
-  let [type, resourceName] = args;
+  let [type, resourceName, buildTask] = args;
   if (source != 0)
     return;
   if (type == "rebuild" && !resourceName) {
@@ -2833,7 +2833,7 @@ async function Command(source, args) {
   let resourcePath = GetResourcePath(resourceName);
   let start = import_perf_hooks.performance.now();
   let files = GetAllScripts(resourceName);
-  let beforePostProcessing = {};
+  let beforePreProcessing = {};
   switch (type) {
     case "build":
       for (let file of files) {
@@ -2849,34 +2849,38 @@ async function Command(source, args) {
       break;
     case "restart":
       let startPreprocess = import_perf_hooks.performance.now();
-      let postProcessedFiles = {};
+      let preProcessedFiles = {};
       for (let file of files) {
         let fileDirectory = ResolveFile(resourcePath, file);
         if (typeof fileDirectory != "string") {
           for (let fileDir of fileDirectory) {
             let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
-            let postProcessed = PostProcess(resourceName, file2, type);
-            beforePostProcessing[fileDir] = file2;
-            postProcessedFiles[fileDir] = postProcessed;
+            if (file2.length > 0) {
+              let postProcessed = PostProcess(resourceName, file2, type);
+              beforePreProcessing[fileDir] = file2;
+              preProcessedFiles[fileDir] = postProcessed;
+            }
           }
         } else {
-          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
-          let postProcessed = PostProcess(resourceName, file2, type);
-          beforePostProcessing[fileDirectory] = file2;
-          postProcessedFiles[fileDirectory] = postProcessed;
+          let file2 = import_fs2.default.readFileSync(fileDirectory);
+          if (file2.length > 0) {
+            let postProcessed = PostProcess(resourceName, file2, type);
+            beforePreProcessing[fileDirectory] = file2;
+            preProcessedFiles[fileDirectory] = postProcessed;
+          }
         }
       }
       let endPreprocess = import_perf_hooks.performance.now();
       let doneWrite = [];
-      let keys = Object.keys(postProcessedFiles);
+      let keys = Object.keys(preProcessedFiles);
       if (keys.length == 1) {
         let fileDir = keys[0];
-        let file = postProcessedFiles[fileDir];
+        let file = preProcessedFiles[fileDir];
         import_fs2.default.writeFileSync(fileDir, file);
       } else {
         let writing = new Promise((resolve) => {
-          for (let fileDir in postProcessedFiles) {
-            let file = postProcessedFiles[fileDir];
+          for (let fileDir in preProcessedFiles) {
+            let file = preProcessedFiles[fileDir];
             doneWrite.push(fileDir);
             import_fs2.default.writeFile(fileDir, file, (err) => {
               if (err)
@@ -2903,12 +2907,20 @@ async function Command(source, args) {
   if (Config.Dev)
     console.log("Pre processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms");
   if (type == "restart") {
-    StopResource(resourceName);
-    StartResource(resourceName);
-    for (let path in beforePostProcessing) {
-      import_fs2.default.writeFileSync(path, beforePostProcessing[path]);
+    if (buildTask) {
+      setTimeout(() => {
+        for (let path in beforePreProcessing) {
+          import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
+        }
+      }, 10);
+      return true;
+    } else {
+      StopResource(resourceName);
+      StartResource(resourceName);
+      for (let path in beforePreProcessing) {
+        import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
+      }
     }
-    return true;
   }
 }
 function CreateCommand(name2) {
@@ -3213,7 +3225,7 @@ var leapBuildTask = {
     return false;
   },
   async build(res, cb) {
-    await Command(0, "restart " + res);
+    Command(0, ["restart", res, true]);
     cb(true);
   }
 };
