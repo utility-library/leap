@@ -32,7 +32,7 @@ function GetAllScripts(resourceName) {
 //#endregion
 
 async function Command(source, args) {
-    let [type, resourceName] = args
+    let [type, resourceName, buildTask] = args
 
     if (source != 0) return // only server side can use the command
 
@@ -53,8 +53,9 @@ async function Command(source, args) {
     let resourcePath = GetResourcePath(resourceName)
     let start = performance.now()
     let files = GetAllScripts(resourceName)
-    let beforePostProcessing = {}
+    let beforePreProcessing = {}
 
+    //console.log(type, resourceName)
     switch(type) {
         case "build":
             for (let file of files) {
@@ -72,27 +73,32 @@ async function Command(source, args) {
             break;
         case "restart":
             let startPreprocess = performance.now()
-            let postProcessedFiles = {}
+            let preProcessedFiles = {}
 
             for (let file of files) {
                 //console.log(file)
                 let fileDirectory = ResolveFile(resourcePath, file)
-                //console.log(fileDirectory)
                 
                 if (typeof fileDirectory != "string") {
                     for (let fileDir of fileDirectory) {
                         let file = fs.readFileSync(fileDir, "utf-8")
-                        let postProcessed = PostProcess(resourceName, file, type)
 
-                        beforePostProcessing[fileDir] = file
-                        postProcessedFiles[fileDir] = postProcessed
+                        if (file.length > 0) {
+                            let postProcessed = PostProcess(resourceName, file, type)
+
+                            beforePreProcessing[fileDir] = file
+                            preProcessedFiles[fileDir] = postProcessed
+                        }
                     }
                 } else {
-                    let file = fs.readFileSync(fileDirectory, "utf-8")
-                    let postProcessed = PostProcess(resourceName, file, type)
+                    let file = fs.readFileSync(fileDirectory)
 
-                    beforePostProcessing[fileDirectory] = file
-                    postProcessedFiles[fileDirectory] = postProcessed
+                    if (file.length > 0) {
+                        let postProcessed = PostProcess(resourceName, file, type)
+    
+                        beforePreProcessing[fileDirectory] = file
+                        preProcessedFiles[fileDirectory] = postProcessed
+                    }
                 }
             }
 
@@ -101,17 +107,18 @@ async function Command(source, args) {
             let doneWrite = []
 
             //console.log("Started writing")
-            //console.log(postProcessedFiles)
-            let keys = Object.keys(postProcessedFiles)
+            //console.log(preProcessedFiles)
+
+            let keys = Object.keys(preProcessedFiles)
 
             if (keys.length == 1) {
                 let fileDir = keys[0]
-                let file = postProcessedFiles[fileDir]
+                let file = preProcessedFiles[fileDir]
                 fs.writeFileSync(fileDir, file)
             } else {
                 let writing = new Promise((resolve) => {
-                    for (let fileDir in postProcessedFiles) {
-                        let file = postProcessedFiles[fileDir]
+                    for (let fileDir in preProcessedFiles) {
+                        let file = preProcessedFiles[fileDir]
     
                         doneWrite.push(fileDir)
                         fs.writeFile(fileDir, file, (err) => {
@@ -150,14 +157,23 @@ async function Command(source, args) {
         // (this will be executed in very few ms (5/10) so it will look like it was never overwritten)
 
         // Restart the resource with the builded files
-        StopResource(resourceName)
-        StartResource(resourceName)
+        
+        if (buildTask) {
+            setTimeout(() => {
+                for (let path in beforePreProcessing) {
+                    fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
+                }
+            }, 10);
+    
+            return true
+        } else {
+            StopResource(resourceName)
+            StartResource(resourceName)
 
-        for (let path in beforePostProcessing) {
-            fs.writeFileSync(path, beforePostProcessing[path]) // Rewrite old files (before post process)
+            for (let path in beforePreProcessing) {
+                fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
+            }
         }
-
-        return true
     }
 }
 

@@ -41,7 +41,7 @@ let leapBuildTask = {
         return false;
     },
     async build(res, cb) {
-        await Command(0, "restart "+res)
+        Command(0, ["restart", res, true])
         cb(true)
     }
 }
