@@ -91,7 +91,7 @@ async function Command(source, args) {
                         }
                     }
                 } else {
-                    let file = fs.readFileSync(fileDirectory)
+                    let file = fs.readFileSync(fileDirectory, "utf-8")
 
                     if (file.length > 0) {
                         let postProcessed = PostProcess(resourceName, file, type)
