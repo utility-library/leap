@@ -2862,7 +2862,7 @@ async function Command(source, args) {
             }
           }
         } else {
-          let file2 = import_fs2.default.readFileSync(fileDirectory);
+          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
           if (file2.length > 0) {
             let postProcessed = PostProcess(resourceName, file2, type);
             beforePreProcessing[fileDirectory] = file2;
