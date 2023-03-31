@@ -8,6 +8,7 @@ import { DefaultValue } from './features/defaultValue'
 import { Unpack } from './features/unpack'
 import { New } from './features/new'
 import { Decorators } from './features/decorators'
+import { TypeChecking } from "./features/typeChecking"
 //#endregion
 
 let Features = [
@@ -16,6 +17,7 @@ let Features = [
     Class,
     ClassExtends,
     DefaultValue,
+    TypeChecking,
     Unpack,
     New,
     Decorators

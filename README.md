@@ -101,9 +101,10 @@ AddEventHandler("eventName", (text) => {
 ### Classes
 Classes are a model for creating objects (a particular data structure), providing initial values for state (member variables or attributes), and implementing behavior (member functions or methods).  
 It is possible as well to extend already existing classes, each method of the class that extends the other class will have as a base a variable named `super` which is an instantiated object of the original class, calling this variable as a function will call the constructor of the original class, otherwise the data of the original class can be accessed.  
-Constructor parameters are those passed when a new object is instantiated.
+Constructor parameters are those passed when a new object is instantiated. [Read more here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)  
+> **Note** Classes have their own type, so calling `type(obj)` with an instantiated class will return the class name
 
-[Read more here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
+---
 
 Syntax:  
 > **Note** Methods automatically hold the `self` variable referring to the instantiated object
@@ -283,9 +284,54 @@ console.log(number1, number2, number3)
 ]]
 ```
 
-# Building leap
-as first thing, thank you for coming down this far and thus wanting to contribute to leap development :heart:.
+### Type checking
+We have added the ability to add types in function parameters, this will give you the ability to specify the required types and prevent bugs.
+> **Note** Classes can also be used as types
 
-To develop leap you just need to download or clone the repository and edit the files inside the `src` folder, the files are divided by feature and by supporting modules, the `out.js` file is the output file after building everything with the `npm run build` command or on the server `leap rebuild`.
-We use [esbuild](https://esbuild.github.io) since fivem (from what we have tested and understood) doesnt support ES (ECMAScript) or just doesnt support the import declaration.
+Syntax:  
+```lua
+function funcName(<type> param1)
+    -- code
+end
+```
+
+Example:  
+```lua
+function DebugText(<string> text)
+    print("debug: "..text)
+end
+
+
+DebugText("test") -- debug: test
+DebugText(100) -- Error loading script *.lua in resource ****: @****/*.lua:7: text: string expected, got number
+```
+```lua
+class Example {
+    myVar = true
+}
+
+class Another {
+    myVar = false
+}
+
+local exampleObj = new Example()
+local anotherObj = new Another()
+
+function FunctionThatAcceptOnlyExampleClass(<Example> example)
+    print("You passed the right variable!")
+end
+
+FunctionThatAcceptOnlyExampleClass(exampleObj) -- You passed the right variable!
+FunctionThatAcceptOnlyExampleClass(exampleObj) -- Error loading script *.lua in resource ****: @****/*.lua:16: example: Example expected, got Another
+```
+
+# Building leap
+As first thing, thank you for coming down this far and thus wanting to contribute to leap development :heart:.  
+
+> **Warning** Obviously, before running the `npm run build` command or the `leap rebuild` command, you need to install the npm modules with the command `npm i`
+
+To develop leap you just need to download or clone the repository and edit the files inside the `src` folder, the files are divided by feature and by supporting modules, the `out.js` file is the output file, you can build everything with the `npm run build` command or on the cfx server with the command `leap rebuild`.  
+
+We use [esbuild](https://esbuild.github.io) since FiveM (from what we have tested and understood) doesnt support ES (ECMAScript) or just doesnt support the import declaration.  
+
 after building everything and restarted leap you just need to build or restart with leap the interested resource.
