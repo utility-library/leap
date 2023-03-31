@@ -60,7 +60,7 @@ async function Command(source, args) {
         case "build":
             for (let file of files) {
                 let fileDirectory = ResolveFile(resourcePath, file)
-                
+
                 if (typeof fileDirectory != "string") {
                     for (let fileDir of fileDirectory) {
                         PostProcess(resourceName, fileDir, type)
@@ -143,8 +143,8 @@ async function Command(source, args) {
 
             let endWriting = performance.now()
             
-            console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
-            console.log("Writing runtime: ^3"+(endWriting - endPreprocess)+"^0ms")
+            if (Config.Dev) console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
+            if (Config.Dev) console.log("Writing runtime: ^3"+(endWriting - endPreprocess)+"^0ms")
             break;
     }
 
