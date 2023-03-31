@@ -6,7 +6,7 @@ import { MatchAllRegex } from "../modules/regex";
 let triggerMatch = VerEx()
     .find("function")
     .maybe(" ")
-    .maybe(VerEx().anythingBut("(")) // provide default value also for anonymous functions
+    .maybe(VerEx().word()) // provide default value also for anonymous functions
     .beginCapture()
         .then("(")
         .anythingBut("()")
