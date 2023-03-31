@@ -366,12 +366,12 @@ var require_verbalexpressions = __commonJS({
         }]);
         return VerbalExpression2;
       }(_extendableBuiltin(RegExp));
-      function VerEx8() {
+      function VerEx9() {
         var instance = new VerbalExpression();
         instance.sanitize = VerbalExpression.sanitize;
         return instance;
       }
-      return VerEx8;
+      return VerEx9;
     });
   }
 });
@@ -2900,8 +2900,10 @@ async function Command(source, args) {
         await writing;
       }
       let endWriting = import_perf_hooks.performance.now();
-      console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
-      console.log("Writing runtime: ^3" + (endWriting - endPreprocess) + "^0ms");
+      if (Config.Dev)
+        console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
+      if (Config.Dev)
+        console.log("Writing runtime: ^3" + (endWriting - endPreprocess) + "^0ms");
       break;
   }
   if (Config.Dev)
@@ -2942,7 +2944,13 @@ function getLine(fileData, string) {
       return 1;
     }
   } else {
-    return fileData.substr(0, string).match(/\n/gi).length;
+    let sliced = fileData.substr(0, string);
+    let match5 = sliced.match(/\n/gi);
+    if (match5) {
+      return match5.length + 1;
+    } else {
+      return 1;
+    }
   }
 }
 function getChars(fileData, lineNumber) {
@@ -3084,10 +3092,13 @@ var Class = {
   from: classMatch,
   to: function(file) {
     let matchIndices = MatchAllRegex(file, classMatch).map((x) => x.index);
-    file = classIterator(file, matchIndices);
-    return file.replace(classMatch, import_dedent.default`
-            $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={
-        `);
+    if (matchIndices.length > 0) {
+      file = classIterator(file, matchIndices);
+      file = file.replace(classMatch, import_dedent.default`
+                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end;Prototype$1={type = "$1",
+            `);
+    }
+    return file;
   }
 };
 var ClassExtends = {
@@ -3103,7 +3114,7 @@ var ClassExtends = {
 
 // src/features/defaultValue.js
 var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
-var triggerMatch = (0, import_verbal_expressions4.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions4.default)().anythingBut("(")).beginCapture().then("(").anythingBut("()").then(")").endCapture();
+var triggerMatch = (0, import_verbal_expressions4.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions4.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
 var extractDefaultValues = (0, import_verbal_expressions4.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
 var DefaultValue = {
   from: triggerMatch,
@@ -3113,10 +3124,10 @@ var DefaultValue = {
     matches.map((match5) => {
       let defaultValues = MatchAllRegex(match5[1], extractDefaultValues);
       if (defaultValues.length > 0) {
-        let afterMatch = getLine(originalFile, match5.index) + 1;
+        let afterMatch = getLine(originalFile, match5.index);
         let parameters = sliceLine(file, afterMatch, afterMatch + 1);
         let originalParameters = parameters;
-        parameters = parameters.slice(0, -2);
+        parameters = parameters.replace((0, import_verbal_expressions4.default)().lineBreak().endOfLine(), "");
         defaultValues.map((param) => {
           parameters += `;${param[1]} = ${param[1]} ~= nil and ${param[1]} or ${param[2]}`;
           let regexEscaped = param[2].replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
@@ -3199,6 +3210,35 @@ var Decorators = {
   }
 };
 
+// src/features/typeChecking.js
+var import_verbal_expressions8 = __toESM(require_verbalexpressions(), 1);
+var triggerMatch2 = (0, import_verbal_expressions8.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions8.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
+var extractTypes = (0, import_verbal_expressions8.default)().find("<").beginCapture().anythingBut(">").endCapture().find(">").find(" ").beginCapture().word().endCapture();
+var TypeChecking = {
+  from: triggerMatch2,
+  to: function(file) {
+    let matches = MatchAllRegex(file, triggerMatch2);
+    let originalFile = file;
+    matches.map((match5) => {
+      let paramsTypes = MatchAllRegex(match5[1], extractTypes);
+      if (paramsTypes.length > 0) {
+        let afterMatch = getLine(originalFile, match5.index);
+        let params = sliceLine(file, afterMatch, afterMatch + 1);
+        let originalParams = params;
+        params = params.replace((0, import_verbal_expressions8.default)().lineBreak().endOfLine(), "");
+        paramsTypes.map((param) => {
+          params += `;assert(type(${param[2]}) == "${param[1]}", "${param[2]}: ${param[1]} expected, got "..type(${param[2]}))`;
+        });
+        let noExecutablePart = (0, import_verbal_expressions8.default)().find("<").anythingBut(">").find(">").maybe(" ");
+        params = params.replace(noExecutablePart, "");
+        params += "\n";
+        file = file.replace(originalParams, params);
+      }
+    });
+    return file;
+  }
+};
+
 // src/index.js
 var Features = [
   ArrowFunction,
@@ -3206,30 +3246,35 @@ var Features = [
   Class,
   ClassExtends,
   DefaultValue,
+  TypeChecking,
   Unpack,
   New,
   Decorators
 ];
-CreateCommand("leap");
-var leapBuildTask = {
-  shouldBuild(res) {
-    const nDependency = GetNumResourceMetadata(res, "dependency");
-    if (nDependency > 0) {
-      for (let i2 = 0; i2 < nDependency; i2++) {
-        const dependencyName = GetResourceMetadata(res, "dependency");
-        if (dependencyName == "leap") {
-          return true;
+if (GetCurrentResourceName() == "leap") {
+  CreateCommand("leap");
+  let leapBuildTask = {
+    shouldBuild(res) {
+      const nDependency = GetNumResourceMetadata(res, "dependency");
+      if (nDependency > 0) {
+        for (let i2 = 0; i2 < nDependency; i2++) {
+          const dependencyName = GetResourceMetadata(res, "dependency");
+          if (dependencyName == "leap") {
+            return true;
+          }
         }
       }
+      return false;
+    },
+    async build(res, cb) {
+      Command(0, ["restart", res, true]);
+      cb(true);
     }
-    return false;
-  },
-  async build(res, cb) {
-    Command(0, ["restart", res, true]);
-    cb(true);
-  }
-};
-RegisterResourceBuildTaskFactory("leap", () => leapBuildTask);
+  };
+  RegisterResourceBuildTaskFactory("leap", () => leapBuildTask);
+} else {
+  setInterval(() => console.log("^1PLEASE DON'T RENAME THE RESOURCE"), 100);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Features
