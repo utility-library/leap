@@ -21,32 +21,34 @@ let Features = [
     Decorators
 ]
 
-CreateCommand("leap")
+if (GetCurrentResourceName() == "leap") {
+    CreateCommand("leap")
 
-
-let leapBuildTask = {
-    shouldBuild(res) {
-        const nDependency = GetNumResourceMetadata(res, 'dependency');
-
-        if (nDependency > 0) {
-            for (let i = 0; i < nDependency; i++) {
-                const dependencyName = GetResourceMetadata(res, 'dependency');
-
-                if (dependencyName == "leap") {
-                    return true;
+    let leapBuildTask = {
+        shouldBuild(res) {
+            const nDependency = GetNumResourceMetadata(res, 'dependency');
+    
+            if (nDependency > 0) {
+                for (let i = 0; i < nDependency; i++) {
+                    const dependencyName = GetResourceMetadata(res, 'dependency');
+    
+                    if (dependencyName == "leap") {
+                        return true;
+                    }
                 }
             }
+    
+            return false;
+        },
+        async build(res, cb) {
+            Command(0, ["restart", res, true])
+            cb(true)
         }
-
-        return false;
-    },
-    async build(res, cb) {
-        Command(0, ["restart", res, true])
-        cb(true)
     }
+    
+    RegisterResourceBuildTaskFactory("leap", () => leapBuildTask)    
+} else {
+    setInterval(() => console.log("^1PLEASE DON'T RENAME THE RESOURCE"), 100)
 }
-
-RegisterResourceBuildTaskFactory("leap", () => leapBuildTask)
-
 
 export {Features}
