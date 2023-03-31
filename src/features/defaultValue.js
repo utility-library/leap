@@ -36,12 +36,13 @@ let DefaultValue = {
             //console.log(match)
             let defaultValues = MatchAllRegex(match[1], extractDefaultValues)
             // If have matched something
+
             if (defaultValues.length > 0) {
-                let afterMatch = getLine(originalFile, match.index) + 1 // We get the line from the original file to have a line matching to match.index, which was found in that file
+                let afterMatch = getLine(originalFile, match.index) // We get the line from the original file to have a line matching to match.index, which was found in that file
                 let parameters = sliceLine(file, afterMatch, afterMatch + 1) // takes only the first line (parameters line)
                 let originalParameters = parameters
                 
-                parameters = parameters.slice(0, -2) // we remove the newline character and then add it afterwards
+                parameters = parameters.replace(VerEx().lineBreak().endOfLine(), "") // we remove the linebreak and then add it afterwards
 
                 defaultValues.map(param => {
                     // param[1] = name
