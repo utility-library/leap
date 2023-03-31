@@ -10,7 +10,14 @@ function getLine(fileData, string) {
             return 1
         }
     } else {
-        return fileData.substr(0, string).match(/\n/gi).length
+        let sliced = fileData.substr(0, string)
+        let match = sliced.match(/\n/gi)
+
+        if (match) {
+            return match.length + 1
+        } else {
+            return 1
+        }
     }
 }
 
