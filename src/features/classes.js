@@ -92,8 +92,6 @@ let Class = {
     from: classMatch,
     to: function(file) {
         let matchIndices = MatchAllRegex(file, classMatch).map(x => x.index);
-
-        file = classIterator(file, matchIndices)
         
         /* Beautified code, code is minified to help with error debugging
             $1 = function(...)
@@ -110,12 +108,34 @@ let Class = {
                 return obj
             end
 
+            -- Type function wrapper to add classes type (is here in order not to add a line to the beginning of the file and thus shred the stack traceback lines)
+            -- We check to see if there is already a class that has overridden the type function so that there is no stack overflow
+            
+            if not _type then
+                _type = type
+                type = function(var)
+                    local realType = _type(var)
+
+                    if realType == "table" and var.type then
+                        return var.type
+                    else
+                        return realType
+                    end
+                end
+            end
+
             Prototype$1 = {
         */
+        
+        if (matchIndices.length > 0) {
+            file = classIterator(file, matchIndices)
 
-        return file.replace(classMatch, dedent`
-            $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={
-        `)
+            file = file.replace(classMatch, dedent`
+                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end;Prototype$1={type = "$1",
+            `)
+        }
+
+        return file
     }
 }
 
