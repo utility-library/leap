@@ -9,7 +9,7 @@ import { Unpack } from './features/unpack'
 import { New } from './features/new'
 import { Decorators } from './features/decorators'
 import { TypeChecking } from "./features/typeChecking"
-//#endregion
+//#endregions
 
 let Features = [
     ArrowFunction,
