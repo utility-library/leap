@@ -1,4 +1,5 @@
 import { CreateCommand, Command } from "./modules/command"
+import { performance } from 'perf_hooks'
 
 //#region Features
 import { ArrowFunction } from "./features/arrowFunction"
@@ -23,11 +24,19 @@ let Features = [
     Decorators
 ]
 
+let lastBuild = {}
+
 if (GetCurrentResourceName() == "leap") {
     CreateCommand("leap")
 
     let leapBuildTask = {
         shouldBuild(res) {
+            if (lastBuild[res]) {
+                if ((performance.now() - lastBuild[res]) < 250) { // prevent build loop
+                    return false
+                }
+            }
+
             const nDependency = GetNumResourceMetadata(res, 'dependency');
     
             if (nDependency > 0) {
@@ -35,6 +44,7 @@ if (GetCurrentResourceName() == "leap") {
                     const dependencyName = GetResourceMetadata(res, 'dependency');
     
                     if (dependencyName == "leap") {
+                        lastBuild[res] = performance.now()
                         return true;
                     }
                 }
@@ -43,7 +53,7 @@ if (GetCurrentResourceName() == "leap") {
             return false;
         },
         async build(res, cb) {
-            Command(0, ["restart", res, true])
+            await Command(0, ["restart", res, true])
             cb(true)
         }
     }
