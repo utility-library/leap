@@ -3055,8 +3055,9 @@ var import_verbal_expressions3 = __toESM(require_verbalexpressions(), 1);
 function classIterator(fileData, matchIndices) {
   const classFunctionTester = (0, import_verbal_expressions3.default)().find("function").maybe(" ").then("(").beginCapture().anythingBut(")").endCapture().then(")");
   let lines;
+  let originalFileData = fileData;
   for (let i2 of matchIndices) {
-    let slicedFile = fileData.slice(i2);
+    let slicedFile = originalFileData.slice(i2);
     [_, startLine, endLine] = ReplaceFunctionEnding(fileData, slicedFile, null);
     let classBody = sliceLine(fileData, startLine, endLine + 1);
     lines = classBody.split("\n");
