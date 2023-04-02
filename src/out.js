@@ -2929,6 +2929,9 @@ function CreateCommand(name2) {
   RegisterCommand(name2, Command, true);
 }
 
+// src/index.js
+var import_perf_hooks2 = require("perf_hooks");
+
 // src/features/arrowFunction.js
 var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
 
@@ -3251,15 +3254,22 @@ var Features = [
   New,
   Decorators
 ];
+var lastBuild = {};
 if (GetCurrentResourceName() == "leap") {
   CreateCommand("leap");
   let leapBuildTask = {
     shouldBuild(res) {
+      if (lastBuild[res]) {
+        if (import_perf_hooks2.performance.now() - lastBuild[res] < 250) {
+          return false;
+        }
+      }
       const nDependency = GetNumResourceMetadata(res, "dependency");
       if (nDependency > 0) {
         for (let i2 = 0; i2 < nDependency; i2++) {
           const dependencyName = GetResourceMetadata(res, "dependency");
           if (dependencyName == "leap") {
+            lastBuild[res] = import_perf_hooks2.performance.now();
             return true;
           }
         }
@@ -3267,7 +3277,7 @@ if (GetCurrentResourceName() == "leap") {
       return false;
     },
     async build(res, cb) {
-      Command(0, ["restart", res, true]);
+      await Command(0, ["restart", res, true]);
       cb(true);
     }
   };
