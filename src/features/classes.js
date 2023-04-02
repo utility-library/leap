@@ -16,9 +16,10 @@ function classIterator(fileData, matchIndices) {
         .then(")")
 
     let lines;
-
+    
+    let originalFileData = fileData
     for (let i of matchIndices) {
-        let slicedFile = fileData.slice(i);
+        let slicedFile = originalFileData.slice(i);
         [_, startLine, endLine] = ReplaceFunctionEnding(fileData, slicedFile, null)
 
         let classBody = sliceLine(fileData, startLine, endLine + 1)
