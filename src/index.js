@@ -1,5 +1,6 @@
 import { CreateCommand, Command } from "./modules/command"
 import { performance } from 'perf_hooks'
+import { exec } from "child_process"
 
 //#region Features
 import { ArrowFunction } from "./features/arrowFunction"
@@ -25,6 +26,16 @@ let Features = [
 ]
 
 let lastBuild = {}
+let vscodeInstalled = false
+
+exec("code --version", 
+    function (error, stdout, stderr) {
+        if (stdout) { // if we dont get an error (unrecognized command etc.)
+            vscodeInstalled = true
+        }
+    }
+)
+
 
 if (GetCurrentResourceName() == "leap") {
     CreateCommand("leap")
@@ -54,6 +65,7 @@ if (GetCurrentResourceName() == "leap") {
         },
         async build(res, cb) {
             await Command(0, ["restart", res, true])
+            lastBuild[res] = performance.now()
             cb(true)
         }
     }
@@ -63,4 +75,4 @@ if (GetCurrentResourceName() == "leap") {
     setInterval(() => console.log("^1PLEASE DON'T RENAME THE RESOURCE"), 100)
 }
 
-export {Features}
+export {Features, vscodeInstalled}

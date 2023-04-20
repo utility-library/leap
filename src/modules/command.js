@@ -11,6 +11,9 @@ import "../modules/string"
 //#endregion
 
 import { Config } from "../../config"
+import { vscodeInstalled } from '../index'
+import { AddExclusion, RemoveExclusion } from './vscode'
+
 
 //#region Functions
 function EsbuildBuild() {
@@ -111,6 +114,11 @@ async function Command(source, args) {
 
             let keys = Object.keys(preProcessedFiles)
 
+            if (vscodeInstalled) {
+                AddExclusion(resourcePath)
+            }
+
+
             if (keys.length == 1) {
                 let fileDir = keys[0]
                 let file = preProcessedFiles[fileDir]
@@ -163,6 +171,10 @@ async function Command(source, args) {
                 for (let path in beforePreProcessing) {
                     fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
                 }
+
+                if (vscodeInstalled) {
+                    RemoveExclusion(resourcePath)
+                }
             }, 10);
     
             return true
@@ -172,6 +184,10 @@ async function Command(source, args) {
 
             for (let path in beforePreProcessing) {
                 fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
+            }
+            
+            if (vscodeInstalled) {
+                RemoveExclusion(resourcePath)
             }
         }
     }
