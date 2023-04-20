@@ -381,7 +381,7 @@ var require_old = __commonJS({
   "node_modules/fs.realpath/old.js"(exports) {
     var pathModule = require("path");
     var isWindows = process.platform === "win32";
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var DEBUG = process.env.NODE_DEBUG && /fs/.test(process.env.NODE_DEBUG);
     function rethrow() {
       var callback;
@@ -446,7 +446,7 @@ var require_old = __commonJS({
         base = m[0];
         previous = "";
         if (isWindows && !knownHard[base]) {
-          fs3.lstatSync(base);
+          fs4.lstatSync(base);
           knownHard[base] = true;
         }
       }
@@ -464,7 +464,7 @@ var require_old = __commonJS({
         if (cache && Object.prototype.hasOwnProperty.call(cache, base)) {
           resolvedLink = cache[base];
         } else {
-          var stat = fs3.lstatSync(base);
+          var stat = fs4.lstatSync(base);
           if (!stat.isSymbolicLink()) {
             knownHard[base] = true;
             if (cache)
@@ -479,8 +479,8 @@ var require_old = __commonJS({
             }
           }
           if (linkTarget === null) {
-            fs3.statSync(base);
-            linkTarget = fs3.readlinkSync(base);
+            fs4.statSync(base);
+            linkTarget = fs4.readlinkSync(base);
           }
           resolvedLink = pathModule.resolve(previous, linkTarget);
           if (cache)
@@ -517,7 +517,7 @@ var require_old = __commonJS({
         base = m[0];
         previous = "";
         if (isWindows && !knownHard[base]) {
-          fs3.lstat(base, function(err) {
+          fs4.lstat(base, function(err) {
             if (err)
               return cb(err);
             knownHard[base] = true;
@@ -545,7 +545,7 @@ var require_old = __commonJS({
         if (cache && Object.prototype.hasOwnProperty.call(cache, base)) {
           return gotResolvedLink(cache[base]);
         }
-        return fs3.lstat(base, gotStat);
+        return fs4.lstat(base, gotStat);
       }
       function gotStat(err, stat) {
         if (err)
@@ -562,10 +562,10 @@ var require_old = __commonJS({
             return gotTarget(null, seenLinks[id], base);
           }
         }
-        fs3.stat(base, function(err2) {
+        fs4.stat(base, function(err2) {
           if (err2)
             return cb(err2);
-          fs3.readlink(base, function(err3, target) {
+          fs4.readlink(base, function(err3, target) {
             if (!isWindows)
               seenLinks[id] = target;
             gotTarget(err3, target);
@@ -597,9 +597,9 @@ var require_fs = __commonJS({
     realpath.realpathSync = realpathSync;
     realpath.monkeypatch = monkeypatch;
     realpath.unmonkeypatch = unmonkeypatch;
-    var fs3 = require("fs");
-    var origRealpath = fs3.realpath;
-    var origRealpathSync = fs3.realpathSync;
+    var fs4 = require("fs");
+    var origRealpath = fs4.realpath;
+    var origRealpathSync = fs4.realpathSync;
     var version = process.version;
     var ok = /^v[0-5]\./.test(version);
     var old = require_old();
@@ -637,12 +637,12 @@ var require_fs = __commonJS({
       }
     }
     function monkeypatch() {
-      fs3.realpath = realpath;
-      fs3.realpathSync = realpathSync;
+      fs4.realpath = realpath;
+      fs4.realpathSync = realpathSync;
     }
     function unmonkeypatch() {
-      fs3.realpath = origRealpath;
-      fs3.realpathSync = origRealpathSync;
+      fs4.realpath = origRealpath;
+      fs4.realpathSync = origRealpathSync;
     }
   }
 });
@@ -1470,7 +1470,7 @@ var require_common = __commonJS({
     function ownProp(obj, field) {
       return Object.prototype.hasOwnProperty.call(obj, field);
     }
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var path = require("path");
     var minimatch = require_minimatch();
     var isAbsolute = require("path").isAbsolute;
@@ -1525,7 +1525,7 @@ var require_common = __commonJS({
       self.stat = !!options.stat;
       self.noprocess = !!options.noprocess;
       self.absolute = !!options.absolute;
-      self.fs = options.fs || fs3;
+      self.fs = options.fs || fs4;
       self.maxLength = options.maxLength || Infinity;
       self.cache = options.cache || /* @__PURE__ */ Object.create(null);
       self.statCache = options.statCache || /* @__PURE__ */ Object.create(null);
@@ -2730,12 +2730,13 @@ var require_dedent = __commonJS({
 // src/index.js
 var src_exports = {};
 __export(src_exports, {
-  Features: () => Features
+  Features: () => Features,
+  vscodeInstalled: () => vscodeInstalled
 });
 module.exports = __toCommonJS(src_exports);
 
 // src/modules/command.js
-var import_fs2 = __toESM(require("fs"), 1);
+var import_fs3 = __toESM(require("fs"), 1);
 var import_perf_hooks = require("perf_hooks");
 var import_child_process = require("child_process");
 
@@ -2801,6 +2802,41 @@ String.prototype.occurrences = function(string) {
 var Config = {};
 Config.Dev = true;
 
+// src/modules/vscode.js
+var import_fs2 = __toESM(require("fs"), 1);
+var vscodeSettingsAlreadyExist = {};
+function SetWatcherExclude(file, status) {
+  let rawdata = import_fs2.default.readFileSync(file);
+  let settings = JSON.parse(rawdata);
+  if (!settings["files.watcherExclude"]) {
+    settings["files.watcherExclude"] = {};
+  }
+  settings["files.watcherExclude"]["**/*.lua"] = status;
+  let data = JSON.stringify(settings, null, 4);
+  import_fs2.default.writeFileSync(file, data);
+}
+function AddExclusion(resourcePath) {
+  if (import_fs2.default.existsSync(resourcePath + "/.vscode/")) {
+    SetWatcherExclude(resourcePath + "/.vscode/settings.json", true);
+    vscodeSettingsAlreadyExist[resourcePath] = true;
+  } else {
+    import_fs2.default.mkdirSync(resourcePath + "/.vscode");
+    import_fs2.default.writeFileSync(resourcePath + "/.vscode/settings.json", JSON.stringify({
+      "files.watcherExclude": {
+        "**/*.lua": true
+      }
+    }));
+  }
+}
+function RemoveExclusion(resourcePath) {
+  if (vscodeSettingsAlreadyExist[resourcePath]) {
+    SetWatcherExclude(resourcePath + "/.vscode/settings.json", false);
+    delete vscodeSettingsAlreadyExist[resourcePath];
+  } else {
+    import_fs2.default.rmSync(resourcePath + "/.vscode", { recursive: true, force: true });
+  }
+}
+
 // src/modules/command.js
 function EsbuildBuild() {
   let resourceName = GetCurrentResourceName();
@@ -2854,7 +2890,7 @@ async function Command(source, args) {
         let fileDirectory = ResolveFile(resourcePath, file);
         if (typeof fileDirectory != "string") {
           for (let fileDir of fileDirectory) {
-            let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
+            let file2 = import_fs3.default.readFileSync(fileDir, "utf-8");
             if (file2.length > 0) {
               let postProcessed = PostProcess(resourceName, file2, type);
               beforePreProcessing[fileDir] = file2;
@@ -2862,7 +2898,7 @@ async function Command(source, args) {
             }
           }
         } else {
-          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
+          let file2 = import_fs3.default.readFileSync(fileDirectory, "utf-8");
           if (file2.length > 0) {
             let postProcessed = PostProcess(resourceName, file2, type);
             beforePreProcessing[fileDirectory] = file2;
@@ -2873,16 +2909,19 @@ async function Command(source, args) {
       let endPreprocess = import_perf_hooks.performance.now();
       let doneWrite = [];
       let keys = Object.keys(preProcessedFiles);
+      if (vscodeInstalled) {
+        AddExclusion(resourcePath);
+      }
       if (keys.length == 1) {
         let fileDir = keys[0];
         let file = preProcessedFiles[fileDir];
-        import_fs2.default.writeFileSync(fileDir, file);
+        import_fs3.default.writeFileSync(fileDir, file);
       } else {
         let writing = new Promise((resolve) => {
           for (let fileDir in preProcessedFiles) {
             let file = preProcessedFiles[fileDir];
             doneWrite.push(fileDir);
-            import_fs2.default.writeFile(fileDir, file, (err) => {
+            import_fs3.default.writeFile(fileDir, file, (err) => {
               if (err)
                 console.log(err);
               else {
@@ -2912,7 +2951,10 @@ async function Command(source, args) {
     if (buildTask) {
       setTimeout(() => {
         for (let path in beforePreProcessing) {
-          import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
+          import_fs3.default.writeFileSync(path, beforePreProcessing[path]);
+        }
+        if (vscodeInstalled) {
+          RemoveExclusion(resourcePath);
         }
       }, 10);
       return true;
@@ -2920,7 +2962,10 @@ async function Command(source, args) {
       StopResource(resourceName);
       StartResource(resourceName);
       for (let path in beforePreProcessing) {
-        import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
+        import_fs3.default.writeFileSync(path, beforePreProcessing[path]);
+      }
+      if (vscodeInstalled) {
+        RemoveExclusion(resourcePath);
       }
     }
   }
@@ -2931,6 +2976,7 @@ function CreateCommand(name2) {
 
 // src/index.js
 var import_perf_hooks2 = require("perf_hooks");
+var import_child_process2 = require("child_process");
 
 // src/features/arrowFunction.js
 var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
@@ -3256,6 +3302,15 @@ var Features = [
   Decorators
 ];
 var lastBuild = {};
+var vscodeInstalled = false;
+(0, import_child_process2.exec)(
+  "code --version",
+  function(error, stdout, stderr) {
+    if (stdout) {
+      vscodeInstalled = true;
+    }
+  }
+);
 if (GetCurrentResourceName() == "leap") {
   CreateCommand("leap");
   let leapBuildTask = {
@@ -3279,6 +3334,7 @@ if (GetCurrentResourceName() == "leap") {
     },
     async build(res, cb) {
       await Command(0, ["restart", res, true]);
+      lastBuild[res] = import_perf_hooks2.performance.now();
       cb(true);
     }
   };
@@ -3288,7 +3344,8 @@ if (GetCurrentResourceName() == "leap") {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  Features
+  Features,
+  vscodeInstalled
 });
 /*! Bundled license information:
 
