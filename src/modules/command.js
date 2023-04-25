@@ -117,7 +117,7 @@ async function Command(source, args) {
             if (vscodeInstalled) {
                 AddExclusion(resourcePath)
                 await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve(), 100)
+                    setTimeout(() => resolve(), 10)
                 })
             }
 
@@ -161,7 +161,7 @@ async function Command(source, args) {
             break;
     }
 
-    if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms" + (vscodeInstalled && " (^3you need to remove about 100ms since there is the vscode watcher exclusion^0)"))
+    if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms" + (vscodeInstalled && " (^3you need to remove some time since there is the vscode watcher exclusion^0)"))
 
     if (type == "restart") {
         // Explanation:
