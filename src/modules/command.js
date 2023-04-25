@@ -116,7 +116,12 @@ async function Command(source, args) {
 
             if (vscodeInstalled) {
                 AddExclusion(resourcePath)
+                await new Promise((resolve, reject) => {
+                    setTimeout(() => resolve(), 100)
+                })
             }
+
+            let startWriting = performance.now()
 
 
             if (keys.length == 1) {
@@ -152,11 +157,11 @@ async function Command(source, args) {
             let endWriting = performance.now()
             
             if (Config.Dev) console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
-            if (Config.Dev) console.log("Writing runtime: ^3"+(endWriting - endPreprocess)+"^0ms")
+            if (Config.Dev) console.log("Writing runtime: ^3"+(endWriting - startWriting)+"^0ms")
             break;
     }
 
-    if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms")
+    if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms" + (vscodeInstalled && " (^3you need to remove about 100ms since there is the vscode watcher exclusion^0)"))
 
     if (type == "restart") {
         // Explanation:
