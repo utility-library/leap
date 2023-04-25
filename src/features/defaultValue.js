@@ -50,7 +50,7 @@ let DefaultValue = {
 
                     // add the default value check
                     parameters +=
-                        `;${param[1]} = ${param[1]} ~= nil and ${param[1]} or ${param[2]}`  // key = key ~= nil and value or defaultValue
+                        `;${param[1]} = (${param[1]} ~= nil and {${param[1]}} or {${param[2]}})[1]`  // key = key ~= nil and value or defaultValue
                         
                     // remove the default value from the parameters
                     let regexEscaped = param[2].replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&") // escape all regex special character
