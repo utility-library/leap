@@ -3183,7 +3183,7 @@ var DefaultValue = {
         let originalParameters = parameters;
         parameters = parameters.replace((0, import_verbal_expressions4.default)().lineBreak().endOfLine(), "");
         defaultValues.map((param) => {
-          parameters += `;${param[1]} = ${param[1]} ~= nil and ${param[1]} or ${param[2]}`;
+          parameters += `;${param[1]} = (${param[1]} ~= nil and {${param[1]}} or {${param[2]}})[1]`;
           let regexEscaped = param[2].replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
           let noExecutablePart = new RegExp("\\s?=\\s?" + regexEscaped);
           parameters = parameters.replace(noExecutablePart, "");
