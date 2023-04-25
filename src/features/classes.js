@@ -26,7 +26,7 @@ function classIterator(fileData, matchIndices) {
         lines = classBody.split("\n");
 
         let inFunction = false;
-        let opening = ["if.*then\n", "function *\\(", "while.*do\n", "for.*do\n"]
+        let opening = ["(?<!else)if.*then", "function\\s*.*\\(", "while.*do", "for.*do"]
         let countEnds = 1;
 
         // self injection in the functions arguments
