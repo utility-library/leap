@@ -125,7 +125,7 @@ let Class = {
                 end
             end
 
-            Prototype$1 = {
+            Prototype$1 = {type = "$1",
         */
         
         if (matchIndices.length > 0) {
@@ -175,11 +175,11 @@ let ClassExtends = {
                 return obj
             end
 
-            Prototype$1 = {
+            Prototype$1 = {type = "$1",
         */
 
         return file.replace(classExtendsMatch, dedent`
-            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={
+            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={type = "$1",
         `)
     }
 }
