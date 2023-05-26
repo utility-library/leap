@@ -8,6 +8,7 @@ let match = VerEx()
     .endCapture()
 
 let New = {
+    id: "new",
     from: match,
     to: function(file) {
         return file.replace(match, "$1")

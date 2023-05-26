@@ -1,4 +1,5 @@
 let NotEqual = {
+    id: "notEqual",
     from: "!=",
     to: "~="
 }

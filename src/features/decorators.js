@@ -63,6 +63,7 @@ let decoratorsVerEx = VerEx()
     )
 
 let Decorators = {
+    id: "decorators",
     from: match,
     to: function(file) {
         MatchAllRegex(file, match).map(match => {

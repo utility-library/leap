@@ -35,11 +35,11 @@ function getChars(fileData, lineNumber) {
 }
 
 function sliceLine(string, lineStart, lineEnd) {
-    if (lineStart && !lineEnd) {
+    if (lineStart && !lineEnd) { // works also with only the starting line (slice from the starting line to the end of the file)
         let chars = getChars(string, lineStart)
 
         return string.slice(chars)
-    } else {
+    } else { // normal line to line slice
         let charsStart = getChars(string, lineStart)
         let charsEnd = getChars(string, lineEnd)
 

@@ -25,6 +25,7 @@ let extractTypes = VerEx()
     .endCapture()
 
 let TypeChecking = {
+    id: "typeChecking",
     from: triggerMatch,
     to: function(file) {
         let matches = MatchAllRegex(file, triggerMatch);

@@ -3,6 +3,7 @@ import VerEx from "verbal-expressions";
 import { ReplaceFunctionEnding } from "../modules/functions";
 import { sliceLine } from "../modules/linesManipulation";
 import { MatchAllRegex } from "../modules/regex";
+import { AddHook } from "./hooking";
 import "../modules/string"
 
 function classIterator(fileData, matchIndices) {
@@ -49,9 +50,9 @@ function classIterator(fileData, matchIndices) {
                 for (e of opening) {
                     countEnds += line.occurrences(e)
                 }
-        
+                
                 countEnds -= line.occurrences("end")
-
+                
                 if (countEnds === 0) {
                     inFunction = false;
                 }
@@ -90,6 +91,7 @@ let classExtendsMatch = VerEx()
     .then("{")
 
 let Class = {
+    id: "class",
     from: classMatch,
     to: function(file) {
         let matchIndices = MatchAllRegex(file, classMatch).map(x => x.index);
@@ -109,22 +111,6 @@ let Class = {
                 return obj
             end
 
-            -- Type function wrapper to add classes type (is here in order not to add a line to the beginning of the file and thus shred the stack traceback lines)
-            -- We check to see if there is already a class that has overridden the type function so that there is no stack overflow
-            
-            if not _type then
-                _type = type
-                type = function(var)
-                    local realType = _type(var)
-
-                    if realType == "table" and var.type then
-                        return var.type
-                    else
-                        return realType
-                    end
-                end
-            end
-
             Prototype$1 = {type = "$1",
         */
         
@@ -132,7 +118,7 @@ let Class = {
             file = classIterator(file, matchIndices)
 
             file = file.replace(classMatch, dedent`
-                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end;Prototype$1={type = "$1",
+                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={type = "$1",
             `)
         }
 
@@ -141,6 +127,7 @@ let Class = {
 }
 
 let ClassExtends = {
+    id: "classExtends",
     from: classExtendsMatch,
     to: function(file) {
         let matchIndices = MatchAllRegex(file, classExtendsMatch).map(x => x.index);
@@ -183,5 +170,26 @@ let ClassExtends = {
         `)
     }
 }
+
+
+/* Beautified code, code is minified to help with error debugging
+
+    -- Type function wrapper to add classes type (is here in order not to add a line to the beginning of the file and thus shred the stack traceback lines)
+    -- We check to see if there is already a class that has overridden the type function so that there is no stack overflow
+    
+    if not _type then
+        _type = type
+        type = function(var)
+            local realType = _type(var)
+
+            if realType == "table" and var.type then
+                return var.type
+            else
+                return realType
+            end
+        end
+    end
+*/
+AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end')
 
 export {Class, ClassExtends}

@@ -27,6 +27,7 @@ let extractDefaultValues = VerEx()
     .endCapture()
 
 let DefaultValue = {
+    id: "defaultValue",
     from: triggerMatch,
     to: function(file) {
         let matches = MatchAllRegex(file, triggerMatch);

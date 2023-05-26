@@ -25,6 +25,7 @@ let match = VerEx()
     .then("{")
 
 let ArrowFunction = {
+    id: "arrowFunction",
     from: match,
     to: function(originalFile) {
         let file = originalFile

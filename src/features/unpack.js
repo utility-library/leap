@@ -9,6 +9,7 @@ let match = VerEx()
     .endCapture()
 
 let Unpack = {
+    id: "unpack",
     from: match,
     to: function(file) {        
         MatchAllRegex(file, match).map(x => {
