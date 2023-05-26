@@ -11,7 +11,7 @@ import "../modules/string"
 //#endregion
 
 import { Config } from "../../config"
-import { vscodeInstalled } from '../index'
+import { UpdateLastBuildTimeForResource, vscodeInstalled } from '../index'
 import { AddExclusion, RemoveExclusion } from './vscode'
 
 
@@ -75,6 +75,8 @@ async function Command(source, args) {
 
             break;
         case "restart":
+            UpdateLastBuildTimeForResource(resourceName)
+        
             let startPreprocess = performance.now()
             let preProcessedFiles = {}
 

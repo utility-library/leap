@@ -13,6 +13,7 @@ import { Decorators } from './features/decorators'
 import { TypeChecking } from "./features/typeChecking"
 //#endregion
 
+// Functions are called only once per file, so you need to use the regex module to find all matches
 let Features = [
     ArrowFunction,
     NotEqual,
@@ -36,6 +37,9 @@ exec("code --version",
     }
 )
 
+function UpdateLastBuildTimeForResource(resourceName) {
+    lastBuild[resourceName] = performance.now()
+}
 
 if (GetCurrentResourceName() == "leap") {
     CreateCommand("leap")
@@ -43,6 +47,7 @@ if (GetCurrentResourceName() == "leap") {
     let leapBuildTask = {
         shouldBuild(res) {
             if (lastBuild[res]) {
+                console.log((performance.now() - lastBuild[res]))
                 if ((performance.now() - lastBuild[res]) < 250) { // prevent build loop
                     return false
                 }
@@ -75,4 +80,4 @@ if (GetCurrentResourceName() == "leap") {
     setInterval(() => console.log("^1PLEASE DON'T RENAME THE RESOURCE"), 100)
 }
 
-export {Features, vscodeInstalled}
+export {Features, vscodeInstalled, UpdateLastBuildTimeForResource}
