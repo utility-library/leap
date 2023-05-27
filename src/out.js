@@ -2731,6 +2731,7 @@ var require_dedent = __commonJS({
 var src_exports = {};
 __export(src_exports, {
   Features: () => Features,
+  UpdateLastBuildTimeForResource: () => UpdateLastBuildTimeForResource,
   vscodeInstalled: () => vscodeInstalled
 });
 module.exports = __toCommonJS(src_exports);
@@ -2744,6 +2745,35 @@ var import_child_process = require("child_process");
 var import_verbal_expressions = __toESM(require_verbalexpressions(), 1);
 var import_glob = __toESM(require_glob(), 1);
 var import_fs = __toESM(require("fs"), 1);
+
+// src/features/hooking.js
+var hooks = [];
+function AddHook(id, content) {
+  hooks.push({ id, content: content + ";" });
+}
+function HookFunctionsOfMatched(body, matchedFeatures) {
+  for (let matched of matchedFeatures) {
+    for (let hook of hooks) {
+      if (typeof hook.id == "string") {
+        if (hook.id != matched) {
+          continue;
+        }
+      } else {
+        let found = hook.id.some((id) => {
+          if (id == matched)
+            return true;
+        });
+        if (found) {
+          continue;
+        }
+      }
+      body = hook.content + body;
+    }
+  }
+  return body;
+}
+
+// src/modules/postProcessing.js
 function ResolveFile(resourcePath, file) {
   if (file.includes("*") > 0) {
     return import_glob.default.sync(file, { cwd: resourcePath, absolute: true });
@@ -2753,6 +2783,7 @@ function ResolveFile(resourcePath, file) {
 }
 function PostProcess(resourceName, file, type, write = true) {
   let fileData = type == "build" ? import_fs.default.readFileSync(file, "utf-8") : file;
+  let matchedFeatures = [];
   for (let feature of Features) {
     if (typeof feature.from == "string") {
       fileData = fileData.replace(feature.from, feature.to);
@@ -2761,6 +2792,7 @@ function PostProcess(resourceName, file, type, write = true) {
       let match5 = feature.from.test(fileData);
       feature.from.addModifier("g");
       if (match5) {
+        matchedFeatures.push(feature.id);
         if (typeof feature.to == "string") {
           fileData = fileData.replace(feature.from, feature.to);
         } else {
@@ -2769,6 +2801,7 @@ function PostProcess(resourceName, file, type, write = true) {
       }
     }
   }
+  fileData = HookFunctionsOfMatched(fileData, matchedFeatures);
   if (type == "build") {
     let outputFileDir = file.replace(resourceName, resourceName + "/build");
     let outputDir = outputFileDir.replace((0, import_verbal_expressions.default)().word().then(".lua"), "");
@@ -2884,6 +2917,7 @@ async function Command(source, args) {
       }
       break;
     case "restart":
+      UpdateLastBuildTimeForResource(resourceName);
       let startPreprocess = import_perf_hooks.performance.now();
       let preProcessedFiles = {};
       for (let file of files) {
@@ -3075,6 +3109,7 @@ var match = (0, import_verbal_expressions2.default)().maybe(
   (0, import_verbal_expressions2.default)().beginCapture().word().endCapture()
 ).maybe(" ").then("=>").maybe(" ").then("{");
 var ArrowFunction = {
+  id: "arrowFunction",
   from: match,
   to: function(originalFile) {
     let file = originalFile;
@@ -3095,6 +3130,7 @@ var ArrowFunction = {
 
 // src/features/notEqual.js
 var NotEqual = {
+  id: "notEqual",
   from: "!=",
   to: "~="
 };
@@ -3143,19 +3179,21 @@ function classIterator(fileData, matchIndices) {
 var classMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
 var classExtendsMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").find("extends").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
 var Class = {
+  id: "class",
   from: classMatch,
   to: function(file) {
     let matchIndices = MatchAllRegex(file, classMatch).map((x) => x.index);
     if (matchIndices.length > 0) {
       file = classIterator(file, matchIndices);
       file = file.replace(classMatch, import_dedent.default`
-                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end;Prototype$1={type = "$1",
+                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={type = "$1",
             `);
     }
     return file;
   }
 };
 var ClassExtends = {
+  id: "classExtends",
   from: classExtendsMatch,
   to: function(file) {
     let matchIndices = MatchAllRegex(file, classExtendsMatch).map((x) => x.index);
@@ -3165,12 +3203,14 @@ var ClassExtends = {
         `);
   }
 };
+AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end');
 
 // src/features/defaultValue.js
 var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
 var triggerMatch = (0, import_verbal_expressions4.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions4.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
 var extractDefaultValues = (0, import_verbal_expressions4.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
 var DefaultValue = {
+  id: "defaultValue",
   from: triggerMatch,
   to: function(file) {
     let matches = MatchAllRegex(file, triggerMatch);
@@ -3200,6 +3240,7 @@ var DefaultValue = {
 var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
 var match2 = (0, import_verbal_expressions5.default)().find("...").not(",").not(")").not("}").beginCapture().word().endCapture();
 var Unpack = {
+  id: "unpack",
   from: match2,
   to: function(file) {
     MatchAllRegex(file, match2).map((x) => {
@@ -3216,6 +3257,7 @@ var Unpack = {
 var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
 var match3 = (0, import_verbal_expressions6.default)().find("new ").beginCapture().anythingBut("(").then("(").endCapture();
 var New = {
+  id: "new",
   from: match3,
   to: function(file) {
     return file.replace(match3, "$1");
@@ -3237,6 +3279,7 @@ var decoratorsVerEx = (0, import_verbal_expressions7.default)().find("@").beginC
   (0, import_verbal_expressions7.default)().find("(").beginCapture().anythingBut("()").endCapture().find(")")
 );
 var Decorators = {
+  id: "decorators",
   from: match4,
   to: function(file) {
     MatchAllRegex(file, match4).map((match5) => {
@@ -3269,6 +3312,7 @@ var import_verbal_expressions8 = __toESM(require_verbalexpressions(), 1);
 var triggerMatch2 = (0, import_verbal_expressions8.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions8.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
 var extractTypes = (0, import_verbal_expressions8.default)().find("<").beginCapture().anythingBut(">").endCapture().find(">").find(" ").beginCapture().word().endCapture();
 var TypeChecking = {
+  id: "typeChecking",
   from: triggerMatch2,
   to: function(file) {
     let matches = MatchAllRegex(file, triggerMatch2);
@@ -3315,11 +3359,15 @@ var vscodeInstalled = false;
     }
   }
 );
+function UpdateLastBuildTimeForResource(resourceName) {
+  lastBuild[resourceName] = import_perf_hooks2.performance.now();
+}
 if (GetCurrentResourceName() == "leap") {
   CreateCommand("leap");
   let leapBuildTask = {
     shouldBuild(res) {
       if (lastBuild[res]) {
+        console.log(import_perf_hooks2.performance.now() - lastBuild[res]);
         if (import_perf_hooks2.performance.now() - lastBuild[res] < 250) {
           return false;
         }
@@ -3349,6 +3397,7 @@ if (GetCurrentResourceName() == "leap") {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   Features,
+  UpdateLastBuildTimeForResource,
   vscodeInstalled
 });
 /*! Bundled license information:
