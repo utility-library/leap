@@ -3186,7 +3186,7 @@ var Class = {
     if (matchIndices.length > 0) {
       file = classIterator(file, matchIndices);
       file = file.replace(classMatch, import_dedent.default`
-                $1=function(...)local a=setmetatable({},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={type = "$1",
+                $1=function(...)local a=setmetatable({__type = "$1"},{__index=function(self,b)return Prototype$1[b]end})if a.constructor then a:constructor(...)end;return a end;Prototype$1={
             `);
     }
     return file;
@@ -3199,11 +3199,12 @@ var ClassExtends = {
     let matchIndices = MatchAllRegex(file, classExtendsMatch).map((x) => x.index);
     file = classIterator(file, matchIndices);
     return file.replace(classExtendsMatch, import_dedent.default`
-            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={type = "$1",
+            $1=function(...)if Prototype$2 then Prototype$1.super=setmetatable({},{__index=function(self,a)return Prototype$2[a]end,__call=function(self,...)self.constructor(...)end})else error("ExtendingNotDefined: trying to extend the class $2 that is not defined")end;local b=setmetatable({__type = "$1"},{__index=function(self,a)return Prototype$1[a]or Prototype$2[a]end})if b.constructor then b:constructor(...)end;return b end;Prototype$1={
         `);
   }
 };
-AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.type then return b.type else return realType end end end');
+AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_type(b)if realType=="table"and b.__type then return b.__type else return realType end end');
+AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h=RegisterNetEvent;RegisterNetEvent=function(i,j)if i then if j then h(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)else h(i)end end end;local k=AddEventHandler;AddEventHandler=function(i,j)if i and j then k(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)end end');
 
 // src/features/defaultValue.js
 var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
