@@ -2752,8 +2752,8 @@ function AddHook(id, content) {
   hooks.push({ id, content: content + ";" });
 }
 function HookFunctionsOfMatched(body, matchedFeatures) {
-  for (let matched of matchedFeatures) {
-    for (let hook of hooks) {
+  for (let hook of hooks) {
+    for (let matched of matchedFeatures) {
       if (typeof hook.id == "string") {
         if (hook.id != matched) {
           continue;
@@ -2763,11 +2763,12 @@ function HookFunctionsOfMatched(body, matchedFeatures) {
           if (id == matched)
             return true;
         });
-        if (found) {
+        if (!found) {
           continue;
         }
       }
       body = hook.content + body;
+      break;
     }
   }
   return body;
@@ -3204,7 +3205,7 @@ var ClassExtends = {
   }
 };
 AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_type(b)if realType=="table"and b.__type then return b.__type else return realType end end');
-AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h=RegisterNetEvent;RegisterNetEvent=function(i,j)if i then if j then h(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)else h(i)end end end;local k=AddEventHandler;AddEventHandler=function(i,j)if i and j then k(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)end end');
+AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local i=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then i(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else i(j)end end end;local l=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then l(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else l(j,k)end end');
 
 // src/features/defaultValue.js
 var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
