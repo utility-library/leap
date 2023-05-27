@@ -212,10 +212,13 @@ AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_t
         return params
     end
 
+    local registeredEvents = {}
     -- also works with RegisterServerEvent (https://github.com/citizenfx/fivem/blob/master/data/shared/citizen/scripting/lua/scheduler.lua#L358)
     local _RegisterNetEvent = RegisterNetEvent
     RegisterNetEvent = function(name, func)
         if name then
+            registeredEvents[name] = true
+
             if func then
                 _RegisterNetEvent(name, function(...)
                     local params = {...}
@@ -234,7 +237,7 @@ AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_t
 
     local _AddEventHandler = AddEventHandler
     AddEventHandler = function(name, func)
-        if name and func then
+        if name and func and registeredEvents[name] then
             _AddEventHandler(name, function(...)
                 local params = {...}
 
@@ -244,10 +247,12 @@ AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_t
 
                 func(table.unpack(params))
             end)
+        else
+            _AddEventHandler(name, func)
         end
     end
 */
-AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h=RegisterNetEvent;RegisterNetEvent=function(i,j)if i then if j then h(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)else h(i)end end end;local k=AddEventHandler;AddEventHandler=function(i,j)if i and j then k(i,function(...)local b={...}if next(b)~=nil then b=a(b)end;j(table.unpack(b))end)end end')
+AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local i=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then i(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else i(j)end end end;local l=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then l(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else l(j,k)end end')
 
 //#endregion
 
