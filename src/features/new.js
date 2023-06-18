@@ -3,7 +3,7 @@ import VerEx from "verbal-expressions";
 let match = VerEx()
     .find("new ")
     .beginCapture()
-        .anythingBut("(")
+        .word()
         .then("(")
     .endCapture()
 
