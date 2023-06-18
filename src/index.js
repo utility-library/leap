@@ -72,7 +72,11 @@ if (GetCurrentResourceName() == "leap") {
             let [status, error] = await Command(0, ["restart", res, true])
             lastBuild[res] = performance.now()
 
-            cb(status, error)
+            if (error) {
+                cb(status, error)
+            } else {
+                cb(status)
+            }
         }
     }
     

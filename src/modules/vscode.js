@@ -17,11 +17,18 @@ function SetWatcherExclude(file, status) {
 }
 
 function AddExclusion(resourcePath) {
-    if (fs.existsSync(resourcePath+"/.vscode/")) {
+    if (fs.existsSync(resourcePath+"/.vscode/") && fs.existsSync(resourcePath+"/.vscode/settings.json")) {
         SetWatcherExclude(resourcePath+"/.vscode/settings.json", true)
         vscodeSettingsAlreadyExist[resourcePath] = true
     } else {
-        fs.mkdirSync(resourcePath+"/.vscode")
+        try {
+            fs.mkdirSync(resourcePath+"/.vscode")
+        } catch(e) {
+            if (e.code != "EEXIST") { // If the error is that it does not already exist, print it out
+                console.log(e)
+            }
+        }
+
         fs.writeFileSync(resourcePath+"/.vscode/settings.json", JSON.stringify({
             "files.watcherExclude": {
                 "**/*.lua": true
