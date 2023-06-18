@@ -176,83 +176,87 @@ let ClassExtends = {
 /* Beautified code, code is minified to help with error debugging
     -- Type function wrapper to add classes type
     
-    _type = type -- we preserve the original "type" function
-    type = function(var)
-        local realType = _type(var)
+    if not _type then
+        _type = type -- we preserve the original "type" function
+        type = function(var)
+            local realType = _type(var)
 
-        if realType == "table" and var.__type then
-            return var.__type
-        else
-            return realType
+            if realType == "table" and var.__type then
+                return var.__type
+            else
+                return realType
+            end
         end
     end
 */
-AddHook(["class", "classExtends"], '_type=type;type=function(b)local realType=_type(b)if realType=="table"and b.__type then return b.__type else return realType end end')
+AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b)local realType=_type(b)if realType=="table"and b.__type then return b.__type else return realType end end end')
 
 //#endregion
 
 //#region Sharing of instantiated objects between server > client and client > server
 
 /* Beautified code, code is minified to help with error debugging
-    local __reconvertToInstantiatedObject = function(params)    
-        for k,v in ipairs(params) do
-            if _type(v) == "table" and v.__type then -- if the real type its a table and have the __type variable (its an instantiated object)
-                local class = _G[v.__type] -- get the class from current side (client/server)
+    if not _RegisteNetEvent and not _AddEventHandler then 
+        local __reconvertToInstantiatedObject = function(params)    
+            for k,v in ipairs(params) do
+                if _type(v) == "table" and v.__type then -- if the real type its a table and have the __type variable (its an instantiated object)
+                    local class = _G[v.__type] -- get the class from current side (client/server)
 
-                if class then -- if the class exist, recreate it from the insantiated object
-                    params[k] = class()
-                    
-                    for _k, _v in pairs(v) do -- ovverride variables in the instantiated object
-                        params[k][_k] = _v
+                    if class then -- if the class exist, recreate it from the insantiated object
+                        params[k] = class()
+                        
+                        for _k, _v in pairs(v) do -- ovverride variables in the instantiated object
+                            params[k][_k] = _v
+                        end
                     end
+                end
+            end
+
+            return params
+        end
+
+        local registeredEvents = {}
+        -- also works with RegisterServerEvent (https://github.com/citizenfx/fivem/blob/master/data/shared/citizen/scripting/lua/scheduler.lua#L358)
+        local _RegisterNetEvent = RegisterNetEvent
+        RegisterNetEvent = function(name, func)
+            if name then
+                registeredEvents[name] = true
+
+                if func then
+                    _RegisterNetEvent(name, function(...)
+                        local params = {...}
+
+                        if next(params) ~= nil then
+                            params = __reconvertToInstantiatedObject(params)
+                        end
+                        
+                        func(table.unpack(params))
+                    end)
+                else
+                    _RegisterNetEvent(name)
                 end
             end
         end
 
-        return params
-    end
-
-    local registeredEvents = {}
-    -- also works with RegisterServerEvent (https://github.com/citizenfx/fivem/blob/master/data/shared/citizen/scripting/lua/scheduler.lua#L358)
-    local _RegisterNetEvent = RegisterNetEvent
-    RegisterNetEvent = function(name, func)
-        if name then
-            registeredEvents[name] = true
-
-            if func then
-                _RegisterNetEvent(name, function(...)
+        local _AddEventHandler = AddEventHandler
+        AddEventHandler = function(name, func)
+            if name and func and registeredEvents[name] then
+                _AddEventHandler(name, function(...)
                     local params = {...}
 
                     if next(params) ~= nil then
                         params = __reconvertToInstantiatedObject(params)
                     end
-                    
+
                     func(table.unpack(params))
                 end)
             else
-                _RegisterNetEvent(name)
+                _AddEventHandler(name, func)
             end
         end
     end
-
-    local _AddEventHandler = AddEventHandler
-    AddEventHandler = function(name, func)
-        if name and func and registeredEvents[name] then
-            _AddEventHandler(name, function(...)
-                local params = {...}
-
-                if next(params) ~= nil then
-                    params = __reconvertToInstantiatedObject(params)
-                end
-
-                func(table.unpack(params))
-            end)
-        else
-            _AddEventHandler(name, func)
-        end
-    end
 */
-AddHook(["class", "classExtends"], 'local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local i=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then i(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else i(j)end end end;local l=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then l(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else l(j,k)end end')
+AddHook(["class", "classExtends"], 'if not _RegisteNetEvent and not _AddEventHandler then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local _RegisterNetEvent=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then _RegisterNetEvent(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else _RegisterNetEvent(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else _AddEventHandler(j,k)end end end')
 
 //#endregion
 
