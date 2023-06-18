@@ -3271,7 +3271,7 @@ var Unpack = {
 
 // src/features/new.js
 var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
-var match3 = (0, import_verbal_expressions6.default)().find("new ").beginCapture().anythingBut("(").then("(").endCapture();
+var match3 = (0, import_verbal_expressions6.default)().find("new ").beginCapture().word().then("(").endCapture();
 var New = {
   id: "new",
   from: match3,
