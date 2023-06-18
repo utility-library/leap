@@ -2850,11 +2850,17 @@ function SetWatcherExclude(file, status) {
   import_fs2.default.writeFileSync(file, data);
 }
 function AddExclusion(resourcePath) {
-  if (import_fs2.default.existsSync(resourcePath + "/.vscode/")) {
+  if (import_fs2.default.existsSync(resourcePath + "/.vscode/") && import_fs2.default.existsSync(resourcePath + "/.vscode/settings.json")) {
     SetWatcherExclude(resourcePath + "/.vscode/settings.json", true);
     vscodeSettingsAlreadyExist[resourcePath] = true;
   } else {
-    import_fs2.default.mkdirSync(resourcePath + "/.vscode");
+    try {
+      import_fs2.default.mkdirSync(resourcePath + "/.vscode");
+    } catch (e2) {
+      if (e2.code != "EEXIST") {
+        console.log(e2);
+      }
+    }
     import_fs2.default.writeFileSync(resourcePath + "/.vscode/settings.json", JSON.stringify({
       "files.watcherExclude": {
         "**/*.lua": true
@@ -2904,6 +2910,14 @@ async function Command(source, args) {
   let start = import_perf_hooks.performance.now();
   let files = GetAllScripts(resourceName);
   let beforePreProcessing = {};
+  if (files.length == 0) {
+    if (buildTask) {
+      return [false, `^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`];
+    } else {
+      console.log(`^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`);
+      return;
+    }
+  }
   switch (type) {
     case "build":
       for (let file of files) {
@@ -2996,7 +3010,7 @@ async function Command(source, args) {
           RemoveExclusion(resourcePath);
         }
       }, 10);
-      return true;
+      return [true];
     } else {
       StopResource(resourceName);
       StartResource(resourceName);
@@ -3387,9 +3401,13 @@ if (GetCurrentResourceName() == "leap") {
       return false;
     },
     async build(res, cb) {
-      await Command(0, ["restart", res, true]);
+      let [status, error] = await Command(0, ["restart", res, true]);
       lastBuild[res] = import_perf_hooks2.performance.now();
-      cb(true);
+      if (error) {
+        cb(status, error);
+      } else {
+        cb(status);
+      }
     }
   };
   RegisterResourceBuildTaskFactory("leap", () => leapBuildTask);
