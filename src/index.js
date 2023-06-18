@@ -69,9 +69,10 @@ if (GetCurrentResourceName() == "leap") {
             return false;
         },
         async build(res, cb) {
-            await Command(0, ["restart", res, true])
+            let [status, error] = await Command(0, ["restart", res, true])
             lastBuild[res] = performance.now()
-            cb(true)
+
+            cb(status, error)
         }
     }
     

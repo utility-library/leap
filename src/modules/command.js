@@ -58,6 +58,15 @@ async function Command(source, args) {
     let files = GetAllScripts(resourceName)
     let beforePreProcessing = {}
 
+    if (files.length == 0) {
+        if (buildTask) {
+            return [false, `^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`]
+        } else {
+            console.log(`^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`)
+            return
+        }
+    }
+
     //console.log(type, resourceName)
     switch(type) {
         case "build":
@@ -183,8 +192,8 @@ async function Command(source, args) {
                     RemoveExclusion(resourcePath)
                 }
             }, 10);
-    
-            return true
+
+            return [true]
         } else {
             StopResource(resourceName)
             StartResource(resourceName)
