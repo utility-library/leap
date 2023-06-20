@@ -2887,6 +2887,7 @@ function GetAllScripts(resourceName) {
   let files = [];
   files = GetAllResourceMetadata(resourceName, "client_script");
   files.push(...GetAllResourceMetadata(resourceName, "server_script"));
+  files.push(...GetAllResourceMetadata(resourceName, "shared_script"));
   files.push(...GetAllResourceMetadata(resourceName, "files"));
   return files;
 }
