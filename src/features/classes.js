@@ -223,7 +223,7 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
                 registeredEvents[name] = true
 
                 if func then
-                    _RegisterNetEvent(name, function(...)
+                    return _RegisterNetEvent(name, function(...)
                         local params = {...}
 
                         if next(params) ~= nil then
@@ -233,7 +233,7 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
                         func(table.unpack(params))
                     end)
                 else
-                    _RegisterNetEvent(name)
+                    return _RegisterNetEvent(name)
                 end
             end
         end
@@ -241,7 +241,7 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
         local _AddEventHandler = AddEventHandler
         AddEventHandler = function(name, func)
             if name and func and registeredEvents[name] then
-                _AddEventHandler(name, function(...)
+                return _AddEventHandler(name, function(...)
                     local params = {...}
 
                     if next(params) ~= nil then
@@ -251,12 +251,12 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
                     func(table.unpack(params))
                 end)
             else
-                _AddEventHandler(name, func)
+                return _AddEventHandler(name, func)
             end
         end
     end
 */
-AddHook(["class", "classExtends"], 'if not _RegisteNetEvent and not _AddEventHandler then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local _RegisterNetEvent=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then _RegisterNetEvent(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else _RegisterNetEvent(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else _AddEventHandler(j,k)end end end')
+AddHook(["class", "classExtends"], 'if not _RegisteNetEvent and not _AddEventHandler then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local _RegisterNetEvent=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then return _RegisterNetEvent(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _RegisterNetEvent(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then return _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _AddEventHandler(j,k)end end end')
 
 //#endregion
 
