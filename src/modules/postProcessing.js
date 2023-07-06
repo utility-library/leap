@@ -14,7 +14,7 @@ function ResolveFile(resourcePath, file) {
         /* Replace the FiveM recursive globbing pattern with the Node globbing pattern. */
         const globPattern = file.replace("**", "**/*");
 
-        return glob.sync(file, {cwd: resourcePath, absolute: true})
+        return glob.sync(globPattern, {cwd: resourcePath, absolute: true})
     
     /* If no globbing was found, format the file directory and foward it to the calling function. */
     } else {
