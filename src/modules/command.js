@@ -62,9 +62,9 @@ async function Command(source, args) {
     }
 
     if (!type || !resourceName) {
-        console.log(`${name} restart <resource>`)
-        console.log(`${name} build <resource>`)
-        if (Config.Dev) console.log(`${name} rebuild`)
+        console.log(`leap restart <resource>`)
+        console.log(`leap build <resource>`)
+        if (Config.Dev) console.log(`leap rebuild`)
         return
     }
 
