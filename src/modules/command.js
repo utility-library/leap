@@ -31,20 +31,6 @@ function GetAllScripts(resourceName) {
     files.push(...GetAllResourceMetadata(resourceName, "shared_script"))
     files.push(...GetAllResourceMetadata(resourceName, "files"))
 
-    /* Check if the user defined any directories to be included in the build process. */
-    if (!Config.IncludeDirectories.length === 0) {
-
-        /* Loop every directory defined in the list of directories. */
-        Config.IncludeDirectories.forEach(function(directory) {
-
-            /* Fetch the files included in the directory and add them into the files array. */
-            files.push(...GetAllResourceMetadata(resourceName, directory))
-        });
-    } else {
-        /* Tell the user they are building with the default directories and inform them on how to add more. */
-        if (Config.Dev) console.log("Building using the default directories, to include any other directories please include them in the configuration.");
-    }
-
     return files
 }
 //#endregion
