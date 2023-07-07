@@ -2,13 +2,13 @@ import VerEx from "verbal-expressions";
 import glob from "glob"
 import fs from "fs"
 import {Features} from "../index"
-import { HookFunctionsOfMatched } from "../features/hooking";
+import {HookFunctionsOfMatched} from "../features/hooking";
 
 function ResolveFile(resourcePath, file) {
     /* Check if the file being resolved uses globbing. */
-    if (file.includes("*") {
+    if (file.includes("*")) {
         if (file.includes("**")) {
-            /* Replace the FiveM recursive globbing pattern with the Node recursive globbing pattern. */1
+            /* Replace the FiveM recursive globbing pattern with the Node recursive globbing pattern. */
             file = file.replace("**", "**/*")
         }
         
