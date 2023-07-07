@@ -8,8 +8,8 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
-  for (var name2 in all)
-    __defProp(target, name2, { get: all[name2], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -2072,8 +2072,8 @@ var require_once = __commonJS({
         f.called = true;
         return f.value = fn.apply(this, arguments);
       };
-      var name2 = fn.name || "Function wrapped with `once`";
-      f.onceError = name2 + " shouldn't be called more than once";
+      var name = fn.name || "Function wrapped with `once`";
+      f.onceError = name + " shouldn't be called more than once";
       f.called = false;
       return f;
     }
@@ -2776,8 +2776,11 @@ function HookFunctionsOfMatched(body, matchedFeatures) {
 
 // src/modules/postProcessing.js
 function ResolveFile(resourcePath, file) {
-  if (file.includes("*") > 0) {
+  if (file.includes("*") && !file.includes("**")) {
     return import_glob.default.sync(file, { cwd: resourcePath, absolute: true });
+  } else if (file.includes("*") && file.includes("**")) {
+    const globPattern = file.replace("**", "**/*");
+    return import_glob.default.sync(globPattern, { cwd: resourcePath, absolute: true });
   } else {
     return resourcePath + "/" + file;
   }
@@ -2901,10 +2904,10 @@ async function Command(source, args) {
     return;
   }
   if (!type || !resourceName) {
-    console.log(`${name} restart <resource>`);
-    console.log(`${name} build <resource>`);
+    console.log(`leap restart <resource>`);
+    console.log(`leap build <resource>`);
     if (Config.Dev)
-      console.log(`${name} rebuild`);
+      console.log(`leap rebuild`);
     return;
   }
   let resourcePath = GetResourcePath(resourceName);
@@ -3024,8 +3027,8 @@ async function Command(source, args) {
     }
   }
 }
-function CreateCommand(name2) {
-  RegisterCommand(name2, Command, true);
+function CreateCommand(name) {
+  RegisterCommand(name, Command, true);
 }
 
 // src/index.js
