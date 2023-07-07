@@ -5,18 +5,14 @@ import {Features} from "../index"
 import { HookFunctionsOfMatched } from "../features/hooking";
 
 function ResolveFile(resourcePath, file) {
-    /* Check if the file being resolved uses non-recursive globbing. */
-    if (file.includes("*") && !file.includes("**")) {
+    /* Check if the file being resolved uses globbing. */
+    if (file.includes("*") {
+        if (file.includes("**")) {
+            /* Replace the FiveM recursive globbing pattern with the Node recursive globbing pattern. */1
+            file = file.replace("**", "**/*")
+        }
+        
         return glob.sync(file, {cwd: resourcePath, absolute: true})
-
-    /* Check if the file being resolved uses recursive globbing. */
-    } else if (file.includes("*") && file.includes("**")) {
-        /* Replace the FiveM recursive globbing pattern with the Node globbing pattern. */
-        const globPattern = file.replace("**", "**/*");
-
-        return glob.sync(globPattern, {cwd: resourcePath, absolute: true})
-    
-    /* If no globbing was found, format the file directory and foward it to the calling function. */
     } else {
         return resourcePath + "/" + file
     }
