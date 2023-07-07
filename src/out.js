@@ -2776,11 +2776,11 @@ function HookFunctionsOfMatched(body, matchedFeatures) {
 
 // src/modules/postProcessing.js
 function ResolveFile(resourcePath, file) {
-  if (file.includes("*") && !file.includes("**")) {
+  if (file.includes("*")) {
+    if (file.includes("**")) {
+      file = file.replace("**", "**/*");
+    }
     return import_glob.default.sync(file, { cwd: resourcePath, absolute: true });
-  } else if (file.includes("*") && file.includes("**")) {
-    const globPattern = file.replace("**", "**/*");
-    return import_glob.default.sync(globPattern, { cwd: resourcePath, absolute: true });
   } else {
     return resourcePath + "/" + file;
   }
