@@ -5,6 +5,25 @@ import {Features} from "../index"
 import {HookFunctionsOfMatched} from "../features/hooking";
 
 function ResolveFile(resourcePath, file) {
+    if (file.includes("@")) {
+        let extractResourceNameAndFile = VerEx()
+            .find("@")
+            .beginCapture()
+                .anythingBut("/")
+            .endCapture()
+            .find("/")
+            .beginCapture()
+                .anything()
+            .endCapture()
+
+        let match = extractResourceNameAndFile.exec(file)
+
+        let resourceName = match[1]
+        file = match[2]
+        
+        resourcePath = GetResourcePath(resourceName)
+    }
+
     /* Check if the file being resolved uses globbing. */
     if (file.includes("*")) {
         if (file.includes("**")) {
