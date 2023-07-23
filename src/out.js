@@ -1099,7 +1099,7 @@ var require_minimatch = __commonJS({
         if (pattern === "")
           return "";
         let re = "";
-        let hasMagic = false;
+        let hasMagic = !!options.nocase;
         let escaping = false;
         const patternListStack = [];
         const negativeLists = [];
@@ -1110,10 +1110,7 @@ var require_minimatch = __commonJS({
         let cs;
         let pl;
         let sp;
-        let dotTravAllowed = pattern.charAt(0) === ".";
-        let dotFileAllowed = options.dot || dotTravAllowed;
-        const patternStart = () => dotTravAllowed ? "" : dotFileAllowed ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
-        const subPatternStart = (p) => p.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
+        const patternStart = pattern.charAt(0) === "." ? "" : options.dot ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))" : "(?!\\.)";
         const clearStateChar = () => {
           if (stateChar) {
             switch (stateChar) {
@@ -1177,7 +1174,7 @@ var require_minimatch = __commonJS({
               if (options.noext)
                 clearStateChar();
               continue;
-            case "(": {
+            case "(":
               if (inClass) {
                 re += "(";
                 continue;
@@ -1186,54 +1183,39 @@ var require_minimatch = __commonJS({
                 re += "\\(";
                 continue;
               }
-              const plEntry = {
+              patternListStack.push({
                 type: stateChar,
                 start: i2 - 1,
                 reStart: re.length,
                 open: plTypes[stateChar].open,
                 close: plTypes[stateChar].close
-              };
-              this.debug(this.pattern, "	", plEntry);
-              patternListStack.push(plEntry);
-              re += plEntry.open;
-              if (plEntry.start === 0 && plEntry.type !== "!") {
-                dotTravAllowed = true;
-                re += subPatternStart(pattern.slice(i2 + 1));
-              }
+              });
+              re += stateChar === "!" ? "(?:(?!(?:" : "(?:";
               this.debug("plType %j %j", stateChar, re);
               stateChar = false;
               continue;
-            }
-            case ")": {
-              const plEntry = patternListStack[patternListStack.length - 1];
-              if (inClass || !plEntry) {
+            case ")":
+              if (inClass || !patternListStack.length) {
                 re += "\\)";
                 continue;
               }
-              patternListStack.pop();
               clearStateChar();
               hasMagic = true;
-              pl = plEntry;
+              pl = patternListStack.pop();
               re += pl.close;
               if (pl.type === "!") {
-                negativeLists.push(Object.assign(pl, { reEnd: re.length }));
+                negativeLists.push(pl);
               }
+              pl.reEnd = re.length;
               continue;
-            }
-            case "|": {
-              const plEntry = patternListStack[patternListStack.length - 1];
-              if (inClass || !plEntry) {
+            case "|":
+              if (inClass || !patternListStack.length) {
                 re += "\\|";
                 continue;
               }
               clearStateChar();
               re += "|";
-              if (plEntry.start === 0 && plEntry.type !== "!") {
-                dotTravAllowed = true;
-                re += subPatternStart(pattern.slice(i2 + 1));
-              }
               continue;
-            }
             case "[":
               clearStateChar();
               if (inClass) {
@@ -1301,27 +1283,23 @@ var require_minimatch = __commonJS({
           const nlFirst = re.slice(nl.reStart, nl.reEnd - 8);
           let nlAfter = re.slice(nl.reEnd);
           const nlLast = re.slice(nl.reEnd - 8, nl.reEnd) + nlAfter;
-          const closeParensBefore = nlBefore.split(")").length;
-          const openParensBefore = nlBefore.split("(").length - closeParensBefore;
+          const openParensBefore = nlBefore.split("(").length - 1;
           let cleanAfter = nlAfter;
           for (let i2 = 0; i2 < openParensBefore; i2++) {
             cleanAfter = cleanAfter.replace(/\)[+*?]?/, "");
           }
           nlAfter = cleanAfter;
-          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "(?:$|\\/)" : "";
+          const dollar = nlAfter === "" && isSub !== SUBPARSE ? "$" : "";
           re = nlBefore + nlFirst + nlAfter + dollar + nlLast;
         }
         if (re !== "" && hasMagic) {
           re = "(?=.)" + re;
         }
         if (addPatternStart) {
-          re = patternStart() + re;
+          re = patternStart + re;
         }
         if (isSub === SUBPARSE) {
           return [re, hasMagic];
-        }
-        if (options.nocase && !hasMagic) {
-          hasMagic = pattern.toUpperCase() !== pattern.toLowerCase();
         }
         if (!hasMagic) {
           return globUnescape(pattern);
@@ -1528,10 +1506,6 @@ var require_common = __commonJS({
         }
         pattern = "**/" + pattern;
       }
-      self.windowsPathsNoEscape = !!options.windowsPathsNoEscape || options.allowWindowsEscape === false;
-      if (self.windowsPathsNoEscape) {
-        pattern = pattern.replace(/\\/g, "/");
-      }
       self.silent = !!options.silent;
       self.pattern = pattern;
       self.strict = options.strict !== false;
@@ -1576,6 +1550,7 @@ var require_common = __commonJS({
       }
       options.nonegate = true;
       options.nocomment = true;
+      options.allowWindowsEscape = true;
       self.minimatch = new Minimatch(pattern, options);
       self.options = self.minimatch.options;
     }
@@ -2954,7 +2929,6 @@ async function Command(source, args) {
       return;
     }
   }
-  console.log(files);
   switch (type) {
     case "build":
       for (let file of files) {
@@ -3038,7 +3012,6 @@ async function Command(source, args) {
   if (Config.Dev)
     console.log("Pre processed in: ^2" + (import_perf_hooks.performance.now() - start) + "^0ms" + (vscodeInstalled && " (^3you need to remove some time since there is the vscode watcher exclusion^0)"));
   if (type == "restart") {
-    console.log(beforePreProcessing);
     if (buildTask) {
       setTimeout(() => {
         for (let path in beforePreProcessing) {
