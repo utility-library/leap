@@ -196,7 +196,7 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
 //#region Sharing of instantiated objects between server > client and client > server
 
 /* Beautified code, code is minified to help with error debugging
-    if not _RegisteNetEvent and not _AddEventHandler then 
+    if not _RegisterNetEvent and not _AddEventHandler and not _exportsPatched then 
         local __reconvertToInstantiatedObject = function(params)    
             for k,v in ipairs(params) do
                 if _type(v) == "table" and v.__type then -- if the real type its a table and have the __type variable (its an instantiated object)
@@ -254,9 +254,31 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
                 return _AddEventHandler(name, func)
             end
         end
+
+        -- We get the original metatable and add the reinstantiation of the objects as we did in AddEventHandler and RegisterNetEvent (see here as reference: github.com/citizenfx/fivem/blob/master/data/shared/citizen/scripting/lua/scheduler.lua#L895-L899)
+        local mtExports = getmetatable(exports)
+        local _exportsPatched = true
+
+        mtExports.__call = function(t, exportName, func)
+            local patched_func = function(...)
+                local params = {...}
+
+                if next(params) ~= nil then
+                    params = __reconvertToInstantiatedObject(params)
+                end
+
+                return func(table.unpack(params))
+            end
+
+            AddEventHandler(string.format('__cfx_export_%s_%s', GetCurrentResourceName(), exportName), function(setCB)
+                setCB(patched_func)
+            end)
+        end
+
+        setmetatable(exports, mtExports)
     end
 */
-AddHook(["class", "classExtends"], 'if not _RegisteNetEvent and not _AddEventHandler then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local _RegisterNetEvent=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then return _RegisterNetEvent(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _RegisterNetEvent(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then return _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _AddEventHandler(j,k)end end end')
+AddHook(["class", "classExtends"], 'if not _RegisterNetEvent and not _AddEventHandler and not _exportsPatched then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local i=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then return i(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return i(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then return _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _AddEventHandler(j,k)end end;local l=getmetatable(exports)local _exportsPatched=true;l.__call=function(m,n,k)local o=function(...)local b={...}if next(b)~=nil then b=a(b)end;return k(table.unpack(b))end;AddEventHandler(string.format("__cfx_export_%s_%s",GetCurrentResourceName(),n),function(p)p(o)end)end;setmetatable(exports,l)end')
 
 //#endregion
 
