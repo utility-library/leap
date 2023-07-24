@@ -31,8 +31,9 @@ To use leap on the escrow or outside the leap ecosystem you can make leap build 
 Leap uses a **shadow writing** system (*we called it that*) that works in the following way:
 After preprocessing the files, [**FiveM**](https://fivem.net) will read the files, cache them and start the resource with those cached files as soon as we start the resource, we instantly rewrite the old files so that it looks like nothing happened. This will be done in very few ms (5/10), so from [VSC](https://code.visualstudio.com) or any other IDE that has the auto refresh feature when updating a file it will look like it was never overwritten
 
+[Eraser link](https://app.eraser.io/workspace/QKVLawkqAvxJmTfvJ1m7?origin=share)
 <div align="center">
- <img src="https://user-images.githubusercontent.com/55803068/223179277-45c58f41-6a65-4e42-a18e-a5aa786155e0.png"  width="60%" height="60%">
+   <img src="https://github.com/utility-library/leap/assets/55803068/48795ab8-0a33-4d04-842b-da190c2294e6"  width="60%" height="60%">
 </div>
 
 ## Commands
@@ -326,12 +327,12 @@ FunctionThatAcceptOnlyExampleClass(exampleObj) -- Error loading script *.lua in 
 ```
 
 # Building leap
-As first thing, thank you for coming down this far and thus wanting to contribute to leap development :heart:.  
+First of all, thank you for your dedication and willingness to contribute to the development of Leap! :heart:
 
-> **Warning** Obviously, before running the `npm run build` command or the `leap rebuild` command, you need to install the npm modules with the command `npm i`
+> **Important Note:** Before executing the `npm run build` command or the `leap rebuild` command, make sure to install the necessary npm modules by using the command `npm i`.
 
-To develop leap you just need to download or clone the repository and edit the files inside the `src` folder, the files are divided by feature and by supporting modules, the `out.js` file is the output file, you can build everything with the `npm run build` command or on the cfx server with the command `leap rebuild`.  
+To begin developing with Leap, simply download or clone the repository and make edits to the files located within the `src` folder. The files are organized by feature and supporting modules. The resulting output file is `out.js`, which can be generated using the `npm run build` command or on the cfx server using the `leap rebuild` command.
 
-We use [esbuild](https://esbuild.github.io) since FiveM (from what we have tested and understood) doesnt support ES (ECMAScript) or just doesnt support the import declaration.  
+We utilize [esbuild](https://esbuild.github.io) since, based on our testing and understanding, FiveM does not support ES (ECMAScript) or the import declaration.
 
-after building everything and restarted leap you just need to build or restart with leap the interested resource.
+Once everything is built and Leap has been restarted, you only need to build or restart the specific resource of interest with Leap.
