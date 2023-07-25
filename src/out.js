@@ -2961,8 +2961,10 @@ async function Command(source, args) {
             if (file2.length > 0) {
               if (!itsEscrowed.test(file2)) {
                 let postProcessed = PostProcess(resourceName, file2, type);
-                beforePreProcessing[fileDir] = file2;
-                preProcessedFiles[fileDir] = postProcessed;
+                if (file2.length != postProcessed.length) {
+                  beforePreProcessing[fileDir] = file2;
+                  preProcessedFiles[fileDir] = postProcessed;
+                }
               }
             }
           }
@@ -2971,8 +2973,10 @@ async function Command(source, args) {
           if (file2.length > 0) {
             if (!itsEscrowed.test(file2)) {
               let postProcessed = PostProcess(resourceName, file2, type);
-              beforePreProcessing[fileDirectory] = file2;
-              preProcessedFiles[fileDirectory] = postProcessed;
+              if (file2.length != postProcessed.length) {
+                beforePreProcessing[fileDirectory] = file2;
+                preProcessedFiles[fileDirectory] = postProcessed;
+              }
             }
           }
         }
