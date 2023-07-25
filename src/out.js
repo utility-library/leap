@@ -366,12 +366,12 @@ var require_verbalexpressions = __commonJS({
         }]);
         return VerbalExpression2;
       }(_extendableBuiltin(RegExp));
-      function VerEx9() {
+      function VerEx10() {
         var instance = new VerbalExpression();
         instance.sanitize = VerbalExpression.sanitize;
         return instance;
       }
-      return VerEx9;
+      return VerEx10;
     });
   }
 });
@@ -2738,6 +2738,7 @@ module.exports = __toCommonJS(src_exports);
 
 // src/modules/command.js
 var import_fs3 = __toESM(require("fs"), 1);
+var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
 var import_perf_hooks = require("perf_hooks");
 var import_child_process = require("child_process");
 
@@ -2824,12 +2825,17 @@ function PostProcess(resourceName, file, type, write = true) {
 }
 
 // src/modules/manifest.js
-function GetAllResourceMetadata(resourceName, key) {
+function GetAllResourceMetadata(resourceName, key, type) {
   let metadataNum = GetNumResourceMetadata(resourceName, key);
   let result = [];
   for (let i2 = 0; i2 < metadataNum; i2++) {
     let metadata = GetResourceMetadata(resourceName, key, i2);
     if (!metadata.includes("--") && metadata.includes(".lua")) {
+      if (type == "build") {
+        if (metadata.includes("@")) {
+          continue;
+        }
+      }
       result.push(metadata);
     }
   }
@@ -2893,12 +2899,12 @@ function EsbuildBuild() {
   let path = GetResourcePath(resourceName);
   (0, import_child_process.execSync)("npm run build", { cwd: path });
 }
-function GetAllScripts(resourceName) {
+function GetAllScripts(resourceName, type) {
   let files = [];
-  files = GetAllResourceMetadata(resourceName, "client_script");
-  files.push(...GetAllResourceMetadata(resourceName, "server_script"));
-  files.push(...GetAllResourceMetadata(resourceName, "shared_script"));
-  files.push(...GetAllResourceMetadata(resourceName, "files"));
+  files = GetAllResourceMetadata(resourceName, "client_script", type);
+  files.push(...GetAllResourceMetadata(resourceName, "server_script", type));
+  files.push(...GetAllResourceMetadata(resourceName, "shared_script", type));
+  files.push(...GetAllResourceMetadata(resourceName, "files", type));
   return files;
 }
 async function Command(source, args) {
@@ -2919,7 +2925,7 @@ async function Command(source, args) {
   }
   let resourcePath = GetResourcePath(resourceName);
   let start = import_perf_hooks.performance.now();
-  let files = GetAllScripts(resourceName);
+  let files = GetAllScripts(resourceName, type);
   let beforePreProcessing = {};
   if (files.length == 0) {
     if (buildTask) {
@@ -2948,21 +2954,26 @@ async function Command(source, args) {
       let preProcessedFiles = {};
       for (let file of files) {
         let fileDirectory = ResolveFile(resourcePath, file);
+        let itsEscrowed = (0, import_verbal_expressions2.default)().startOfLine().find("FXAP").removeModifier("m").addModifier("s");
         if (typeof fileDirectory != "string") {
           for (let fileDir of fileDirectory) {
             let file2 = import_fs3.default.readFileSync(fileDir, "utf-8");
             if (file2.length > 0) {
-              let postProcessed = PostProcess(resourceName, file2, type);
-              beforePreProcessing[fileDir] = file2;
-              preProcessedFiles[fileDir] = postProcessed;
+              if (!itsEscrowed.test(file2)) {
+                let postProcessed = PostProcess(resourceName, file2, type);
+                beforePreProcessing[fileDir] = file2;
+                preProcessedFiles[fileDir] = postProcessed;
+              }
             }
           }
         } else {
           let file2 = import_fs3.default.readFileSync(fileDirectory, "utf-8");
           if (file2.length > 0) {
-            let postProcessed = PostProcess(resourceName, file2, type);
-            beforePreProcessing[fileDirectory] = file2;
-            preProcessedFiles[fileDirectory] = postProcessed;
+            if (!itsEscrowed.test(file2)) {
+              let postProcessed = PostProcess(resourceName, file2, type);
+              beforePreProcessing[fileDirectory] = file2;
+              preProcessedFiles[fileDirectory] = postProcessed;
+            }
           }
         }
       }
@@ -3043,7 +3054,7 @@ var import_perf_hooks2 = require("perf_hooks");
 var import_child_process2 = require("child_process");
 
 // src/features/arrowFunction.js
-var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
+var import_verbal_expressions3 = __toESM(require_verbalexpressions(), 1);
 
 // src/modules/linesManipulation.js
 function getLine(fileData, string) {
@@ -3129,10 +3140,10 @@ function MatchAllRegex(string, regex) {
 }
 
 // src/features/arrowFunction.js
-var match = (0, import_verbal_expressions2.default)().maybe(
-  (0, import_verbal_expressions2.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")
+var match = (0, import_verbal_expressions3.default)().maybe(
+  (0, import_verbal_expressions3.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")
 ).maybe(
-  (0, import_verbal_expressions2.default)().beginCapture().word().endCapture()
+  (0, import_verbal_expressions3.default)().beginCapture().word().endCapture()
 ).maybe(" ").then("=>").maybe(" ").then("{");
 var ArrowFunction = {
   id: "arrowFunction",
@@ -3163,9 +3174,9 @@ var NotEqual = {
 
 // src/features/classes.js
 var import_dedent = __toESM(require_dedent(), 1);
-var import_verbal_expressions3 = __toESM(require_verbalexpressions(), 1);
+var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
 function classIterator(fileData, matchIndices) {
-  const classFunctionTester = (0, import_verbal_expressions3.default)().find("function").maybe(" ").then("(").beginCapture().anythingBut(")").endCapture().then(")");
+  const classFunctionTester = (0, import_verbal_expressions4.default)().find("function").maybe(" ").then("(").beginCapture().anythingBut(")").endCapture().then(")");
   let lines;
   let originalFileData = fileData;
   for (let i2 of matchIndices) {
@@ -3202,8 +3213,8 @@ function classIterator(fileData, matchIndices) {
   }
   return fileData;
 }
-var classMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
-var classExtendsMatch = (0, import_verbal_expressions3.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").find("extends").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
+var classMatch = (0, import_verbal_expressions4.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
+var classExtendsMatch = (0, import_verbal_expressions4.default)().find("class").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").find("extends").maybe(" ").beginCapture().anythingBut(" ").endCapture().maybe(" ").then("{");
 var Class = {
   id: "class",
   from: classMatch,
@@ -3233,9 +3244,9 @@ AddHook(["class", "classExtends"], 'if not _type then _type=type;type=function(b
 AddHook(["class", "classExtends"], 'if not _RegisterNetEvent and not _AddEventHandler and not _exportsPatched then local a=function(b)for c,d in ipairs(b)do if _type(d)=="table"and d.__type then local e=_G[d.__type]if e then b[c]=e()for f,g in pairs(d)do b[c][f]=g end end end end;return b end;local h={}local i=RegisterNetEvent;RegisterNetEvent=function(j,k)if j then h[j]=true;if k then return i(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return i(j)end end end;local _AddEventHandler=AddEventHandler;AddEventHandler=function(j,k)if j and k and h[j]then return _AddEventHandler(j,function(...)local b={...}if next(b)~=nil then b=a(b)end;k(table.unpack(b))end)else return _AddEventHandler(j,k)end end;local l=getmetatable(exports)local _exportsPatched=true;l.__call=function(m,n,k)local o=function(...)local b={...}if next(b)~=nil then b=a(b)end;return k(table.unpack(b))end;AddEventHandler(string.format("__cfx_export_%s_%s",GetCurrentResourceName(),n),function(p)p(o)end)end;setmetatable(exports,l)end');
 
 // src/features/defaultValue.js
-var import_verbal_expressions4 = __toESM(require_verbalexpressions(), 1);
-var triggerMatch = (0, import_verbal_expressions4.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions4.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
-var extractDefaultValues = (0, import_verbal_expressions4.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
+var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
+var triggerMatch = (0, import_verbal_expressions5.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions5.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
+var extractDefaultValues = (0, import_verbal_expressions5.default)().beginCapture().anythingBut(" ()").endCapture().maybe(" ").then("=").maybe(" ").beginCapture().anythingBut(",)").endCapture();
 var DefaultValue = {
   id: "defaultValue",
   from: triggerMatch,
@@ -3248,7 +3259,7 @@ var DefaultValue = {
         let afterMatch = getLine(originalFile, match5.index);
         let parameters = sliceLine(file, afterMatch, afterMatch + 1);
         let originalParameters = parameters;
-        parameters = parameters.replace((0, import_verbal_expressions4.default)().lineBreak().endOfLine(), "");
+        parameters = parameters.replace((0, import_verbal_expressions5.default)().lineBreak().endOfLine(), "");
         defaultValues.map((param) => {
           parameters += `;${param[1]} = (${param[1]} ~= nil and {${param[1]}} or {${param[2]}})[1]`;
           let regexEscaped = param[2].replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
@@ -3264,8 +3275,8 @@ var DefaultValue = {
 };
 
 // src/features/unpack.js
-var import_verbal_expressions5 = __toESM(require_verbalexpressions(), 1);
-var match2 = (0, import_verbal_expressions5.default)().find("...").not(",").not(")").not("}").beginCapture().word().endCapture();
+var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
+var match2 = (0, import_verbal_expressions6.default)().find("...").not(",").not(")").not("}").beginCapture().word().endCapture();
 var Unpack = {
   id: "unpack",
   from: match2,
@@ -3281,8 +3292,8 @@ var Unpack = {
 };
 
 // src/features/new.js
-var import_verbal_expressions6 = __toESM(require_verbalexpressions(), 1);
-var match3 = (0, import_verbal_expressions6.default)().find("new ").beginCapture().word().then("(").endCapture();
+var import_verbal_expressions7 = __toESM(require_verbalexpressions(), 1);
+var match3 = (0, import_verbal_expressions7.default)().find("new ").beginCapture().word().then("(").endCapture();
 var New = {
   id: "new",
   from: match3,
@@ -3292,18 +3303,18 @@ var New = {
 };
 
 // src/features/decorators.js
-var import_verbal_expressions7 = __toESM(require_verbalexpressions(), 1);
-var match4 = (0, import_verbal_expressions7.default)().beginCapture().find("@").word().maybe(
-  (0, import_verbal_expressions7.default)().find("(").anythingBut("()").find(")")
-).maybe((0, import_verbal_expressions7.default)().lineBreak()).endCapture().oneOrMore().maybe((0, import_verbal_expressions7.default)().lineBreak()).maybe(
-  (0, import_verbal_expressions7.default)().maybe(
-    (0, import_verbal_expressions7.default)().find("local").maybe(" ")
+var import_verbal_expressions8 = __toESM(require_verbalexpressions(), 1);
+var match4 = (0, import_verbal_expressions8.default)().beginCapture().find("@").word().maybe(
+  (0, import_verbal_expressions8.default)().find("(").anythingBut("()").find(")")
+).maybe((0, import_verbal_expressions8.default)().lineBreak()).endCapture().oneOrMore().maybe((0, import_verbal_expressions8.default)().lineBreak()).maybe(
+  (0, import_verbal_expressions8.default)().maybe(
+    (0, import_verbal_expressions8.default)().find("local").maybe(" ")
   ).beginCapture().word().endCapture().maybe(" ").find("=").maybe(" ")
 ).then("function").maybe(" ").maybe(
-  (0, import_verbal_expressions7.default)().beginCapture().anythingBut("(").endCapture()
+  (0, import_verbal_expressions8.default)().beginCapture().anythingBut("(").endCapture()
 ).then("(");
-var decoratorsVerEx = (0, import_verbal_expressions7.default)().find("@").beginCapture().word().endCapture().maybe(
-  (0, import_verbal_expressions7.default)().find("(").beginCapture().anythingBut("()").endCapture().find(")")
+var decoratorsVerEx = (0, import_verbal_expressions8.default)().find("@").beginCapture().word().endCapture().maybe(
+  (0, import_verbal_expressions8.default)().find("(").beginCapture().anythingBut("()").endCapture().find(")")
 );
 var Decorators = {
   id: "decorators",
@@ -3335,9 +3346,9 @@ var Decorators = {
 };
 
 // src/features/typeChecking.js
-var import_verbal_expressions8 = __toESM(require_verbalexpressions(), 1);
-var triggerMatch2 = (0, import_verbal_expressions8.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions8.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
-var extractTypes = (0, import_verbal_expressions8.default)().find("<").beginCapture().anythingBut(">").endCapture().find(">").find(" ").beginCapture().word().endCapture();
+var import_verbal_expressions9 = __toESM(require_verbalexpressions(), 1);
+var triggerMatch2 = (0, import_verbal_expressions9.default)().find("function").maybe(" ").maybe((0, import_verbal_expressions9.default)().word()).beginCapture().then("(").anythingBut("()").then(")").endCapture();
+var extractTypes = (0, import_verbal_expressions9.default)().find("<").beginCapture().anythingBut(">").endCapture().find(">").find(" ").beginCapture().word().endCapture();
 var TypeChecking = {
   id: "typeChecking",
   from: triggerMatch2,
@@ -3350,11 +3361,11 @@ var TypeChecking = {
         let afterMatch = getLine(originalFile, match5.index);
         let params = sliceLine(file, afterMatch, afterMatch + 1);
         let originalParams = params;
-        params = params.replace((0, import_verbal_expressions8.default)().lineBreak().endOfLine(), "");
+        params = params.replace((0, import_verbal_expressions9.default)().lineBreak().endOfLine(), "");
         paramsTypes.map((param) => {
           params += `;assert(type(${param[2]}) == "${param[1]}", "${param[2]}: ${param[1]} expected, got "..type(${param[2]}))`;
         });
-        let noExecutablePart = (0, import_verbal_expressions8.default)().find("<").anythingBut(">").find(">").maybe(" ");
+        let noExecutablePart = (0, import_verbal_expressions9.default)().find("<").anythingBut(">").find(">").maybe(" ");
         params = params.replace(noExecutablePart, "");
         params += "\n";
         file = file.replace(originalParams, params);
