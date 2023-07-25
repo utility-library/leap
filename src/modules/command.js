@@ -1,5 +1,6 @@
 //#region Library
 import fs from 'fs'
+import VerEx from 'verbal-expressions'
 import { performance } from 'perf_hooks'
 import { execSync } from 'child_process'
 //#endregion
@@ -23,13 +24,13 @@ function EsbuildBuild() {
     execSync("npm run build", {cwd: path})
 }
 
-function GetAllScripts(resourceName) {
+function GetAllScripts(resourceName, type) {
     let files = []
 
-    files = GetAllResourceMetadata(resourceName, "client_script")
-    files.push(...GetAllResourceMetadata(resourceName, "server_script"))
-    files.push(...GetAllResourceMetadata(resourceName, "shared_script"))
-    files.push(...GetAllResourceMetadata(resourceName, "files"))
+    files = GetAllResourceMetadata(resourceName, "client_script", type)
+    files.push(...GetAllResourceMetadata(resourceName, "server_script", type))
+    files.push(...GetAllResourceMetadata(resourceName, "shared_script", type))
+    files.push(...GetAllResourceMetadata(resourceName, "files", type))
 
     return files
 }
@@ -56,7 +57,7 @@ async function Command(source, args) {
 
     let resourcePath = GetResourcePath(resourceName)
     let start = performance.now()
-    let files = GetAllScripts(resourceName)
+    let files = GetAllScripts(resourceName, type)
     let beforePreProcessing = {}
 
     if (files.length == 0) {
@@ -93,26 +94,38 @@ async function Command(source, args) {
             for (let file of files) {
                 //console.log(file)
                 let fileDirectory = ResolveFile(resourcePath, file)
-                
+
+                let itsEscrowed = VerEx()
+                    .startOfLine()
+                    .find("FXAP")
+                    .removeModifier("m")
+                    .addModifier("s")
+
                 if (typeof fileDirectory != "string") {
                     for (let fileDir of fileDirectory) {
                         let file = fs.readFileSync(fileDir, "utf-8")
 
                         if (file.length > 0) {
-                            let postProcessed = PostProcess(resourceName, file, type)
+                            // ignore escrowed files
+                            if (!itsEscrowed.test(file)) {
+                                let postProcessed = PostProcess(resourceName, file, type)
 
-                            beforePreProcessing[fileDir] = file
-                            preProcessedFiles[fileDir] = postProcessed
+                                beforePreProcessing[fileDir] = file
+                                preProcessedFiles[fileDir] = postProcessed
+                            }
                         }
                     }
                 } else {
                     let file = fs.readFileSync(fileDirectory, "utf-8")
 
                     if (file.length > 0) {
-                        let postProcessed = PostProcess(resourceName, file, type)
-    
-                        beforePreProcessing[fileDirectory] = file
-                        preProcessedFiles[fileDirectory] = postProcessed
+                        // ignore escrowed files
+                        if (!itsEscrowed.test(file)) {
+                            let postProcessed = PostProcess(resourceName, file, type)
+        
+                            beforePreProcessing[fileDirectory] = file
+                            preProcessedFiles[fileDirectory] = postProcessed
+                        }
                     }
                 }
             }
@@ -144,7 +157,7 @@ async function Command(source, args) {
                 let writing = new Promise((resolve) => {
                     for (let fileDir in preProcessedFiles) {
                         let file = preProcessedFiles[fileDir]
-    
+                        
                         doneWrite.push(fileDir)
                         fs.writeFile(fileDir, file, (err) => {
                             if (err) 
