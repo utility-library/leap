@@ -110,8 +110,10 @@ async function Command(source, args) {
                             if (!itsEscrowed.test(file)) {
                                 let postProcessed = PostProcess(resourceName, file, type)
 
-                                beforePreProcessing[fileDir] = file
-                                preProcessedFiles[fileDir] = postProcessed
+                                if (file.length != postProcessed.length) {
+                                    beforePreProcessing[fileDir] = file
+                                    preProcessedFiles[fileDir] = postProcessed
+                                }
                             }
                         }
                     }
@@ -122,9 +124,11 @@ async function Command(source, args) {
                         // ignore escrowed files
                         if (!itsEscrowed.test(file)) {
                             let postProcessed = PostProcess(resourceName, file, type)
-        
-                            beforePreProcessing[fileDirectory] = file
-                            preProcessedFiles[fileDirectory] = postProcessed
+
+                            if (file.length != postProcessed.length) {
+                                beforePreProcessing[fileDirectory] = file
+                                preProcessedFiles[fileDirectory] = postProcessed
+                            }
                         }
                     }
                 }
