@@ -3107,6 +3107,12 @@ function ReplaceFunctionEnding(string, linesAfterMatch, to = "end", opening = "{
   let lineByLine = linesAfterMatch.split("\n");
   let i2;
   let curlyBracesCounter = 0;
+  if (to === null)
+    to = "end";
+  if (opening === null)
+    opening = "{";
+  if (closing === null)
+    closing = "}";
   for (i2 in lineByLine) {
     let line = lineByLine[i2];
     if (typeof opening == "object") {
@@ -3144,11 +3150,7 @@ function MatchAllRegex(string, regex) {
 }
 
 // src/features/arrowFunction.js
-var match = (0, import_verbal_expressions3.default)().maybe(
-  (0, import_verbal_expressions3.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")
-).maybe(
-  (0, import_verbal_expressions3.default)().beginCapture().word().endCapture()
-).maybe(" ").then("=>").maybe(" ").then("{");
+var match = (0, import_verbal_expressions3.default)().maybe((0, import_verbal_expressions3.default)().find("(").beginCapture().anythingBut("()").endCapture().then(")")).maybe((0, import_verbal_expressions3.default)().beginCapture().word().endCapture()).maybe(" ").then("=>").maybe(" ").then("{");
 var ArrowFunction = {
   id: "arrowFunction",
   from: match,
@@ -3156,7 +3158,10 @@ var ArrowFunction = {
     let file = originalFile;
     let matches = MatchAllRegex(file, match);
     matches.map((x) => {
-      [file] = ReplaceFunctionEnding(file, file.split("\n").slice(getLine(originalFile, x.index)).join("\n"));
+      [file] = ReplaceFunctionEnding(
+        file,
+        file.split("\n").slice(getLine(originalFile, x.index) - 1).join("\n")
+      );
       match.removeModifier("g");
       if (x[1] != null) {
         file = file.replace(match, "function($1)");
