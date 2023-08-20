@@ -76,7 +76,7 @@ let Decorators = {
             let slicedFile = sliceLine(file, line+(decorators.length)); // get all lines after the decorators
 
             // used in this way (with undefined as replace) does not actually replace the character, but simply gets where the function starts and ends
-            let [_, startLine, endLine] = ReplaceFunctionEnding(file, slicedFile, null, ["if", "function", "while", "for"], "end")
+            let [_, startLine, endLine] = ReplaceFunctionEnding(file, slicedFile, null, ["(?<!\\S)if\\b", "(?<!\\S)function\\b", "(?<!\\S)while\\b", "(?<!\\S)for\\b"], "(?<!\\S)end\\b")
             
             startLine -= (decorators.length) // include decorators
 
