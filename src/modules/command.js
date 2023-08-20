@@ -13,7 +13,6 @@ import "../modules/string"
 
 import { Config } from "../../config"
 import { UpdateLastBuildTimeForResource, vscodeInstalled } from '../index'
-import { AddExclusion, RemoveExclusion } from './vscode'
 
 
 //#region Functions
@@ -41,7 +40,9 @@ async function Command(source, args) {
 
     if (source != 0) return // only server side can use the command
 
-    if (type == "rebuild" && !resourceName) { // esbuild rebuild directly from fxserver
+    if (type == "rebuild") { // esbuild rebuild directly from fxserver
+        if (resourceName) { console.log("^1The rebuild command does not need a resource, did you mean to write \"leap build\"?^0") }
+
         EsbuildBuild()
         console.log("^2Rebuilt^0")
 
@@ -70,6 +71,7 @@ async function Command(source, args) {
     }
 
     //console.log(type, resourceName)
+    
     switch(type) {
         case "build":
             for (let file of files) {
@@ -142,53 +144,55 @@ async function Command(source, args) {
             //console.log(preProcessedFiles)
 
             let keys = Object.keys(preProcessedFiles)
-
-            if (vscodeInstalled) {
-                AddExclusion(resourcePath)
-                await new Promise((resolve, reject) => {
-                    setTimeout(() => resolve(), 10)
-                })
-            }
-
             let startWriting = performance.now()
-
-
-            if (keys.length == 1) {
-                let fileDir = keys[0]
-                let file = preProcessedFiles[fileDir]
-                fs.writeFileSync(fileDir, file)
-            } else {
-                let writing = new Promise((resolve) => {
-                    for (let fileDir in preProcessedFiles) {
-                        let file = preProcessedFiles[fileDir]
-                        
-                        doneWrite.push(fileDir)
-                        fs.writeFile(fileDir, file, (err) => {
-                            if (err) 
-                                console.log(err)
-                            else {
-                                let index = doneWrite.indexOf(fileDir)
-                                if (index > -1) {
-                                    doneWrite.splice(index, 1)
-                                }
-    
-                                if (doneWrite.length == 0) {    
-                                    resolve(true)
-                                }
-                            }
-                        })
-                    }
-                })
-    
-                await writing;
-            }
-
-            let endWriting = performance.now()
             
-            if (Config.Dev) console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
-            if (Config.Dev) console.log("Writing runtime: ^3"+(endWriting - startWriting)+"^0ms")
+            if (keys.length == 0 && files.length == 0) {
+                return [false, `^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`]
+            } else {}
+            
+            if (keys.length == 0) {
+                console.log("^3No file needs preprocessing, the resource will be started without preprocessing (you probably put leap in the dependencies without actually using it in any files)^0")
+
+                return [true]
+            } else {
+                if (keys.length == 1) {
+                    let fileDir = keys[0]
+                    let file = preProcessedFiles[fileDir]
+                    fs.writeFileSync(fileDir, file)
+                } else {
+                    let writing = new Promise((resolve) => {
+                        for (let fileDir in preProcessedFiles) {
+                            let file = preProcessedFiles[fileDir]
+                            
+                            doneWrite.push(fileDir)
+                            fs.writeFile(fileDir, file, (err) => {
+                                if (err) 
+                                    return [false, err]
+                                else {
+                                    let index = doneWrite.indexOf(fileDir)
+                                    if (index > -1) {
+                                        doneWrite.splice(index, 1)
+                                    }
+        
+                                    if (doneWrite.length == 0) {    
+                                        resolve(true)
+                                    }
+                                }
+                            })
+                        }
+                    })
+        
+                    await writing;
+                }
+
+                let endWriting = performance.now()
+            
+                if (Config.Dev) console.log("Pre process runtime: ^3"+(endPreprocess - startPreprocess)+"^0ms")
+                if (Config.Dev) console.log("Writing runtime: ^3"+(endWriting - startWriting)+"^0ms")
+            }
             break;
     }
+
 
     if (Config.Dev) console.log("Pre processed in: ^2"+(performance.now() - start)+"^0ms" + (vscodeInstalled && " (^3you need to remove some time since there is the vscode watcher exclusion^0)"))
 
@@ -205,10 +209,6 @@ async function Command(source, args) {
                 for (let path in beforePreProcessing) {
                     fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
                 }
-
-                if (vscodeInstalled) {
-                    RemoveExclusion(resourcePath)
-                }
             }, 10);
 
             return [true]
@@ -218,10 +218,6 @@ async function Command(source, args) {
 
             for (let path in beforePreProcessing) {
                 fs.writeFileSync(path, beforePreProcessing[path]) // Rewrite old files (before post process)
-            }
-            
-            if (vscodeInstalled) {
-                RemoveExclusion(resourcePath)
             }
         }
     }

@@ -1,4 +1,6 @@
 import { CreateCommand, Command } from "./modules/command"
+import { AddExclusion, RemoveExclusion } from './modules/vscode'
+
 import { performance } from 'perf_hooks'
 import { exec } from "child_process"
 
@@ -69,8 +71,18 @@ if (GetCurrentResourceName() == "leap") {
             return false;
         },
         async build(res, cb) {
+            let resourcePath = GetResourcePath(res)
+
+            if (vscodeInstalled) {
+                AddExclusion(resourcePath)
+            }
+
             let [status, error] = await Command(0, ["restart", res, true])
             lastBuild[res] = performance.now()
+
+            if (vscodeInstalled) {
+                RemoveExclusion(resourcePath)
+            }
 
             if (error) {
                 cb(status, error)
