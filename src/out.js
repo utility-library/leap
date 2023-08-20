@@ -2737,7 +2737,7 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 
 // src/modules/command.js
-var import_fs3 = __toESM(require("fs"), 1);
+var import_fs2 = __toESM(require("fs"), 1);
 var import_verbal_expressions2 = __toESM(require_verbalexpressions(), 1);
 var import_perf_hooks = require("perf_hooks");
 var import_child_process = require("child_process");
@@ -2830,7 +2830,7 @@ function GetAllResourceMetadata(resourceName, key, type) {
   let result = [];
   for (let i2 = 0; i2 < metadataNum; i2++) {
     let metadata = GetResourceMetadata(resourceName, key, i2);
-    if (!metadata.includes("--") && metadata.includes(".lua")) {
+    if (!metadata.includes("--") && (metadata.includes(".lua") || metadata.includes(".*"))) {
       if (type == "build") {
         if (metadata.includes("@")) {
           continue;
@@ -2852,47 +2852,6 @@ String.prototype.occurrences = function(string) {
 var Config = {};
 Config.Dev = true;
 
-// src/modules/vscode.js
-var import_fs2 = __toESM(require("fs"), 1);
-var vscodeSettingsAlreadyExist = {};
-function SetWatcherExclude(file, status) {
-  let rawdata = import_fs2.default.readFileSync(file);
-  let settings = JSON.parse(rawdata);
-  if (!settings["files.watcherExclude"]) {
-    settings["files.watcherExclude"] = {};
-  }
-  settings["files.watcherExclude"]["**/*.lua"] = status;
-  let data = JSON.stringify(settings, null, 4);
-  import_fs2.default.writeFileSync(file, data);
-}
-function AddExclusion(resourcePath) {
-  if (import_fs2.default.existsSync(resourcePath + "/.vscode/") && import_fs2.default.existsSync(resourcePath + "/.vscode/settings.json")) {
-    SetWatcherExclude(resourcePath + "/.vscode/settings.json", true);
-    vscodeSettingsAlreadyExist[resourcePath] = true;
-  } else {
-    try {
-      import_fs2.default.mkdirSync(resourcePath + "/.vscode");
-    } catch (e2) {
-      if (e2.code != "EEXIST") {
-        console.log(e2);
-      }
-    }
-    import_fs2.default.writeFileSync(resourcePath + "/.vscode/settings.json", JSON.stringify({
-      "files.watcherExclude": {
-        "**/*.lua": true
-      }
-    }));
-  }
-}
-function RemoveExclusion(resourcePath) {
-  if (vscodeSettingsAlreadyExist[resourcePath]) {
-    SetWatcherExclude(resourcePath + "/.vscode/settings.json", false);
-    delete vscodeSettingsAlreadyExist[resourcePath];
-  } else {
-    import_fs2.default.rmSync(resourcePath + "/.vscode", { recursive: true, force: true });
-  }
-}
-
 // src/modules/command.js
 function EsbuildBuild() {
   let resourceName = GetCurrentResourceName();
@@ -2911,7 +2870,10 @@ async function Command(source, args) {
   let [type, resourceName, buildTask] = args;
   if (source != 0)
     return;
-  if (type == "rebuild" && !resourceName) {
+  if (type == "rebuild") {
+    if (resourceName) {
+      console.log('^1The rebuild command does not need a resource, did you mean to write "leap build"?^0');
+    }
     EsbuildBuild();
     console.log("^2Rebuilt^0");
     return;
@@ -2957,7 +2919,7 @@ async function Command(source, args) {
         let itsEscrowed = (0, import_verbal_expressions2.default)().startOfLine().find("FXAP").removeModifier("m").addModifier("s");
         if (typeof fileDirectory != "string") {
           for (let fileDir of fileDirectory) {
-            let file2 = import_fs3.default.readFileSync(fileDir, "utf-8");
+            let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
             if (file2.length > 0) {
               if (!itsEscrowed.test(file2)) {
                 let postProcessed = PostProcess(resourceName, file2, type);
@@ -2969,7 +2931,7 @@ async function Command(source, args) {
             }
           }
         } else {
-          let file2 = import_fs3.default.readFileSync(fileDirectory, "utf-8");
+          let file2 = import_fs2.default.readFileSync(fileDirectory, "utf-8");
           if (file2.length > 0) {
             if (!itsEscrowed.test(file2)) {
               let postProcessed = PostProcess(resourceName, file2, type);
@@ -2984,44 +2946,47 @@ async function Command(source, args) {
       let endPreprocess = import_perf_hooks.performance.now();
       let doneWrite = [];
       let keys = Object.keys(preProcessedFiles);
-      if (vscodeInstalled) {
-        AddExclusion(resourcePath);
-        await new Promise((resolve, reject) => {
-          setTimeout(() => resolve(), 10);
-        });
-      }
       let startWriting = import_perf_hooks.performance.now();
-      if (keys.length == 1) {
-        let fileDir = keys[0];
-        let file = preProcessedFiles[fileDir];
-        import_fs3.default.writeFileSync(fileDir, file);
+      if (keys.length == 0 && files.length == 0) {
+        return [false, `^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`];
       } else {
-        let writing = new Promise((resolve) => {
-          for (let fileDir in preProcessedFiles) {
-            let file = preProcessedFiles[fileDir];
-            doneWrite.push(fileDir);
-            import_fs3.default.writeFile(fileDir, file, (err) => {
-              if (err)
-                console.log(err);
-              else {
-                let index = doneWrite.indexOf(fileDir);
-                if (index > -1) {
-                  doneWrite.splice(index, 1);
-                }
-                if (doneWrite.length == 0) {
-                  resolve(true);
-                }
-              }
-            });
-          }
-        });
-        await writing;
       }
-      let endWriting = import_perf_hooks.performance.now();
-      if (Config.Dev)
-        console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
-      if (Config.Dev)
-        console.log("Writing runtime: ^3" + (endWriting - startWriting) + "^0ms");
+      if (keys.length == 0) {
+        console.log("^3No file needs preprocessing, the resource will be started without preprocessing (you probably put leap in the dependencies without actually using it in any files)^0");
+        return [true];
+      } else {
+        if (keys.length == 1) {
+          let fileDir = keys[0];
+          let file = preProcessedFiles[fileDir];
+          import_fs2.default.writeFileSync(fileDir, file);
+        } else {
+          let writing = new Promise((resolve) => {
+            for (let fileDir in preProcessedFiles) {
+              let file = preProcessedFiles[fileDir];
+              doneWrite.push(fileDir);
+              import_fs2.default.writeFile(fileDir, file, (err) => {
+                if (err)
+                  return [false, err];
+                else {
+                  let index = doneWrite.indexOf(fileDir);
+                  if (index > -1) {
+                    doneWrite.splice(index, 1);
+                  }
+                  if (doneWrite.length == 0) {
+                    resolve(true);
+                  }
+                }
+              });
+            }
+          });
+          await writing;
+        }
+        let endWriting = import_perf_hooks.performance.now();
+        if (Config.Dev)
+          console.log("Pre process runtime: ^3" + (endPreprocess - startPreprocess) + "^0ms");
+        if (Config.Dev)
+          console.log("Writing runtime: ^3" + (endWriting - startWriting) + "^0ms");
+      }
       break;
   }
   if (Config.Dev)
@@ -3030,10 +2995,7 @@ async function Command(source, args) {
     if (buildTask) {
       setTimeout(() => {
         for (let path in beforePreProcessing) {
-          import_fs3.default.writeFileSync(path, beforePreProcessing[path]);
-        }
-        if (vscodeInstalled) {
-          RemoveExclusion(resourcePath);
+          import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
         }
       }, 10);
       return [true];
@@ -3041,16 +3003,54 @@ async function Command(source, args) {
       StopResource(resourceName);
       StartResource(resourceName);
       for (let path in beforePreProcessing) {
-        import_fs3.default.writeFileSync(path, beforePreProcessing[path]);
-      }
-      if (vscodeInstalled) {
-        RemoveExclusion(resourcePath);
+        import_fs2.default.writeFileSync(path, beforePreProcessing[path]);
       }
     }
   }
 }
 function CreateCommand(name) {
   RegisterCommand(name, Command, true);
+}
+
+// src/modules/vscode.js
+var import_fs3 = __toESM(require("fs"), 1);
+var vscodeSettingsAlreadyExist = {};
+function SetWatcherExclude(file, status) {
+  let rawdata = import_fs3.default.readFileSync(file);
+  let settings = JSON.parse(rawdata);
+  if (!settings["files.watcherExclude"]) {
+    settings["files.watcherExclude"] = {};
+  }
+  settings["files.watcherExclude"]["**/*.lua"] = status;
+  let data = JSON.stringify(settings, null, 4);
+  import_fs3.default.writeFileSync(file, data);
+}
+function AddExclusion(resourcePath) {
+  if (import_fs3.default.existsSync(resourcePath + "/.vscode/") && import_fs3.default.existsSync(resourcePath + "/.vscode/settings.json")) {
+    SetWatcherExclude(resourcePath + "/.vscode/settings.json", true);
+    vscodeSettingsAlreadyExist[resourcePath] = true;
+  } else {
+    try {
+      import_fs3.default.mkdirSync(resourcePath + "/.vscode");
+    } catch (e2) {
+      if (e2.code != "EEXIST") {
+        console.log(e2);
+      }
+    }
+    import_fs3.default.writeFileSync(resourcePath + "/.vscode/settings.json", JSON.stringify({
+      "files.watcherExclude": {
+        "**/*.lua": true
+      }
+    }));
+  }
+}
+function RemoveExclusion(resourcePath) {
+  if (vscodeSettingsAlreadyExist[resourcePath]) {
+    SetWatcherExclude(resourcePath + "/.vscode/settings.json", false);
+    delete vscodeSettingsAlreadyExist[resourcePath];
+  } else {
+    import_fs3.default.rmSync(resourcePath + "/.vscode", { recursive: true, force: true });
+  }
 }
 
 // src/index.js
@@ -3107,12 +3107,6 @@ function ReplaceFunctionEnding(string, linesAfterMatch, to = "end", opening = "{
   let lineByLine = linesAfterMatch.split("\n");
   let i2;
   let curlyBracesCounter = 0;
-  if (to === null)
-    to = "end";
-  if (opening === null)
-    opening = "{";
-  if (closing === null)
-    closing = "}";
   for (i2 in lineByLine) {
     let line = lineByLine[i2];
     if (typeof opening == "object") {
@@ -3334,7 +3328,7 @@ var Decorators = {
       let decorators = MatchAllRegex(match5[0], decoratorsVerEx);
       let line = getLine(file, match5[0]);
       let slicedFile = sliceLine(file, line + decorators.length);
-      let [_2, startLine2, endLine2] = ReplaceFunctionEnding(file, slicedFile, null, ["if", "function", "while", "for"], "end");
+      let [_2, startLine2, endLine2] = ReplaceFunctionEnding(file, slicedFile, null, ["(?<!\\S)if\\b", "(?<!\\S)function\\b", "(?<!\\S)while\\b", "(?<!\\S)for\\b"], "(?<!\\S)end\\b");
       startLine2 -= decorators.length;
       let functionContent = sliceLine(file, startLine2, endLine2 + 1);
       functionContent = functionContent.slice(0, -2);
@@ -3432,8 +3426,15 @@ if (GetCurrentResourceName() == "leap") {
       return false;
     },
     async build(res, cb) {
+      let resourcePath = GetResourcePath(res);
+      if (vscodeInstalled) {
+        AddExclusion(resourcePath);
+      }
       let [status, error] = await Command(0, ["restart", res, true]);
       lastBuild[res] = import_perf_hooks2.performance.now();
+      if (vscodeInstalled) {
+        RemoveExclusion(resourcePath);
+      }
       if (error) {
         cb(status, error);
       } else {
