@@ -1,48 +1,39 @@
-import { getLine } from "./linesManipulation";
-import "./string";
+import { getLine } from "./linesManipulation"
+import "./string"
 
 function ReplaceFunctionEnding(string, linesAfterMatch, to = "end", opening = "{", closing = "}") {
-	let lineByLine = linesAfterMatch.split("\n"); // Unpack lines
-	let i;
-	let curlyBracesCounter = 0;
+    let lineByLine = linesAfterMatch.split("\n") // Unpack lines
+    let i
+    let curlyBracesCounter = 0
 
-	if (to === null) to = "end";
-	if (opening === null) opening = "{";
-	if (closing === null) closing = "}";
+    for (i in lineByLine) {
+        let line = lineByLine[i]
+        
+        if (typeof opening == "object") {
+            for (e of opening) {
+                curlyBracesCounter += line.occurrences(e)
+            }
+        } else {
+            curlyBracesCounter += line.occurrences(opening)
+        }
 
-	//console.log(to, new Error().stack);
+        curlyBracesCounter -= line.occurrences(closing)
 
-	for (i in lineByLine) {
-		let line = lineByLine[i];
+        //console.log(i, line)
+        if (curlyBracesCounter == 0) {
+            if (to) {
+                lineByLine[i] = line.replace(closing, to)
+            }
+            break
+        }
+    }
+    
+    string = string.replace(linesAfterMatch, lineByLine.join("\n"))
 
-		if (typeof opening == "object") {
-			for (e of opening) {
-				curlyBracesCounter += line.occurrences(e);
-			}
-		} else {
-			curlyBracesCounter += line.occurrences(opening);
-		}
+    let startLine = getLine(string, lineByLine[0])
+    let endLine = startLine + parseInt(i)
 
-		curlyBracesCounter -= line.occurrences(closing);
-
-		//console.log(i, line)
-		if (curlyBracesCounter == 0) {
-			//console.log(to, line);
-			if (to) {
-				lineByLine[i] = line.replace(closing, to);
-			}
-
-			break;
-		}
-	}
-
-	//console.log(linesAfterMatch.includes(lineByLine.join("\n")));
-	string = string.replace(linesAfterMatch, lineByLine.join("\n"));
-
-	let startLine = getLine(string, lineByLine[0]);
-	let endLine = startLine + parseInt(i);
-
-	return [string, startLine, endLine];
+    return [string, startLine, endLine]
 }
 
-export { ReplaceFunctionEnding };
+export {ReplaceFunctionEnding}
