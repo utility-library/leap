@@ -5,7 +5,7 @@ function GetAllResourceMetadata(resourceName, key, type) {
     for (let i=0; i < metadataNum; i++) {     
         let metadata = GetResourceMetadata(resourceName, key, i)
  
-        if (!metadata.includes("--") && metadata.includes(".lua")) {
+        if (!metadata.includes("--") && (metadata.includes(".lua") || metadata.includes(".*"))) {
             if (type == "build") {
                 if (metadata.includes("@")) {
                     continue
