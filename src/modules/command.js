@@ -71,7 +71,20 @@ async function Command(source, args) {
     }
 
     //console.log(type, resourceName)
-    
+    if (!(GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus"))) { // if the server its starting up
+        await new Promise((resolve, reject) => {
+            let interval = setInterval(() => {
+                if (GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) { // Server started
+                    //console.log("Server started, processing "+ resourceName)
+                    resolve()
+                    clearInterval(interval)
+                } else {
+                    //console.log("Waiting server startup for processing resource" + resourceName)
+                }
+            }, 3000)
+        })
+    }
+
     switch(type) {
         case "build":
             for (let file of files) {
@@ -94,7 +107,6 @@ async function Command(source, args) {
             let preProcessedFiles = {}
 
             for (let file of files) {
-                //console.log(file)
                 let fileDirectory = ResolveFile(resourcePath, file)
 
                 let itsEscrowed = VerEx()
@@ -105,7 +117,7 @@ async function Command(source, args) {
 
                 if (typeof fileDirectory != "string") {
                     for (let fileDir of fileDirectory) {
-                        let file = fs.readFileSync(fileDir, "utf-8")
+                        let file = await fs.promises.readFile(fileDir, "utf-8")
 
                         if (file.length > 0) {
                             // ignore escrowed files
