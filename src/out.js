@@ -2897,6 +2897,17 @@ async function Command(source, args) {
       return;
     }
   }
+  if (!GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) {
+    await new Promise((resolve, reject) => {
+      let interval = setInterval(() => {
+        if (GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) {
+          resolve();
+          clearInterval(interval);
+        } else {
+        }
+      }, 3e3);
+    });
+  }
   switch (type) {
     case "build":
       for (let file of files) {
@@ -2919,7 +2930,7 @@ async function Command(source, args) {
         let itsEscrowed = (0, import_verbal_expressions2.default)().startOfLine().find("FXAP").removeModifier("m").addModifier("s");
         if (typeof fileDirectory != "string") {
           for (let fileDir of fileDirectory) {
-            let file2 = import_fs2.default.readFileSync(fileDir, "utf-8");
+            let file2 = await import_fs2.default.promises.readFile(fileDir, "utf-8");
             if (file2.length > 0) {
               if (!itsEscrowed.test(file2)) {
                 let postProcessed = PostProcess(resourceName, file2, type);
