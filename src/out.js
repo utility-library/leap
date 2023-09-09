@@ -2850,7 +2850,7 @@ String.prototype.occurrences = function(string) {
 
 // config.js
 var Config = {};
-Config.Dev = true;
+Config.Dev = GetConvarInt("leap:dev", 0) == 1 ? true : false;
 
 // src/modules/command.js
 function EsbuildBuild() {
@@ -2896,17 +2896,6 @@ async function Command(source, args) {
       console.log(`^1No files provided by the resource (probably a typo), check the manifest of ${resourceName}^0`);
       return;
     }
-  }
-  if (!GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) {
-    await new Promise((resolve, reject) => {
-      let interval = setInterval(() => {
-        if (GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) {
-          resolve();
-          clearInterval(interval);
-        } else {
-        }
-      }, 3e3);
-    });
   }
   switch (type) {
     case "build":
@@ -3401,6 +3390,10 @@ var Features = [
   New,
   Decorators
 ];
+var leapBusy = {
+  status: false,
+  resource: ""
+};
 var lastBuild = {};
 var vscodeInstalled = false;
 (0, import_child_process2.exec)(
@@ -3414,12 +3407,14 @@ var vscodeInstalled = false;
 function UpdateLastBuildTimeForResource(resourceName) {
   lastBuild[resourceName] = import_perf_hooks2.performance.now();
 }
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 if (GetCurrentResourceName() == "leap") {
   CreateCommand("leap");
   let leapBuildTask = {
     shouldBuild(res) {
       if (lastBuild[res]) {
-        console.log(import_perf_hooks2.performance.now() - lastBuild[res]);
         if (import_perf_hooks2.performance.now() - lastBuild[res] < 250) {
           return false;
         }
@@ -3436,21 +3431,34 @@ if (GetCurrentResourceName() == "leap") {
       }
       return false;
     },
-    async build(res, cb) {
-      let resourcePath = GetResourcePath(res);
-      if (vscodeInstalled) {
-        AddExclusion(resourcePath);
-      }
-      let [status, error] = await Command(0, ["restart", res, true]);
-      lastBuild[res] = import_perf_hooks2.performance.now();
-      if (vscodeInstalled) {
-        RemoveExclusion(resourcePath);
-      }
-      if (error) {
-        cb(status, error);
-      } else {
-        cb(status);
-      }
+    build(res, cb) {
+      let buildleap = async () => {
+        if (leapBusy.status) {
+          console.log(`leap is busy: we are preprocessing ${leapBusy.resource}`);
+        }
+        while (leapBusy.status) {
+          await sleep(200);
+        }
+        leapBusy.status = true;
+        leapBusy.resource = res;
+        let resourcePath = GetResourcePath(res);
+        if (vscodeInstalled) {
+          AddExclusion(resourcePath);
+        }
+        let [status, error] = await Command(0, ["restart", res, true]);
+        lastBuild[res] = import_perf_hooks2.performance.now();
+        if (vscodeInstalled) {
+          RemoveExclusion(resourcePath);
+        }
+        if (error) {
+          cb(status, error);
+        } else {
+          cb(status);
+        }
+        leapBusy.status = false;
+        leapBusy.resource = void 0;
+      };
+      buildleap().then();
     }
   };
   RegisterResourceBuildTaskFactory("leap", () => leapBuildTask);
