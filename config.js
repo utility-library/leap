@@ -1,6 +1,6 @@
 var Config = {}
 
-Config.Dev = true
+Config.Dev = GetConvarInt("leap:dev", 0) == 1 ? true : false
 
 
 // ignore
