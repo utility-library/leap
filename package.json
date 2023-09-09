@@ -1,6 +1,6 @@
 {
   "name": "leap",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Pre-processor of a \"modernized\" and extended version of lua that pre-processes in pure executable lua. Mainly intended for FiveM",
   "main": "src/index.js",
   "type": "module",
