@@ -70,21 +70,6 @@ async function Command(source, args) {
         }
     }
 
-    //console.log(type, resourceName)
-    if (!(GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus"))) { // if the server its starting up
-        await new Promise((resolve, reject) => {
-            let interval = setInterval(() => {
-                if (GetConsoleBuffer().includes("Authenticated with cfx.re Nucleus")) { // Server started
-                    //console.log("Server started, processing "+ resourceName)
-                    resolve()
-                    clearInterval(interval)
-                } else {
-                    //console.log("Waiting server startup for processing resource" + resourceName)
-                }
-            }, 3000)
-        })
-    }
-
     switch(type) {
         case "build":
             for (let file of files) {
