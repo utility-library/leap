@@ -28,6 +28,10 @@ let Features = [
     Decorators
 ]
 
+let leapBusy = {
+    status: false,
+    resource: ""
+}
 let lastBuild = {}
 let vscodeInstalled = false
 
@@ -43,13 +47,16 @@ function UpdateLastBuildTimeForResource(resourceName) {
     lastBuild[resourceName] = performance.now()
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 if (GetCurrentResourceName() == "leap") {
     CreateCommand("leap")
 
     let leapBuildTask = {
         shouldBuild(res) {
             if (lastBuild[res]) {
-                console.log((performance.now() - lastBuild[res]))
                 if ((performance.now() - lastBuild[res]) < 250) { // prevent build loop
                     return false
                 }
@@ -70,25 +77,43 @@ if (GetCurrentResourceName() == "leap") {
     
             return false;
         },
-        async build(res, cb) {
-            let resourcePath = GetResourcePath(res)
+        build(res, cb) {
+            let buildleap = async () => {
+                //await CheckEverythingStarted();
+                if (leapBusy.status) {
+                    console.log(`leap is busy: we are preprocessing ${leapBusy.resource}`)
+                }
 
-            if (vscodeInstalled) {
-                AddExclusion(resourcePath)
+                while (leapBusy.status) {
+                    await sleep(200)
+                }
+
+                leapBusy.status = true
+                leapBusy.resource = res
+
+                let resourcePath = GetResourcePath(res)
+
+                if (vscodeInstalled) {
+                    AddExclusion(resourcePath)
+                }
+
+                let [status, error] = await Command(0, ["restart", res, true])
+                lastBuild[res] = performance.now()
+
+                if (vscodeInstalled) {
+                    RemoveExclusion(resourcePath)
+                }
+
+                if (error) {
+                    cb(status, error)
+                } else {
+                    cb(status)
+                }
+
+                leapBusy.status = false
+                leapBusy.resource = undefined
             }
-
-            let [status, error] = await Command(0, ["restart", res, true])
-            lastBuild[res] = performance.now()
-
-            if (vscodeInstalled) {
-                RemoveExclusion(resourcePath)
-            }
-
-            if (error) {
-                cb(status, error)
-            } else {
-                cb(status)
-            }
+            buildleap().then()
         }
     }
     
