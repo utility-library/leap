@@ -62,7 +62,7 @@ resource structure tree after build:
 ---
 
 ### leap rebuild
-> **Warning** Command designed only for development
+> **Warning** Command designed only for development, you need to enable the [development status](#development-status)
 
 `leap rebuild` rebuild with esbuild directly from fxserver instead of having to open a separate process (simply run `npm run build`)
 
@@ -336,3 +336,18 @@ To begin developing with Leap, simply download or clone the repository and make 
 We utilize [esbuild](https://esbuild.github.io) since, based on our testing and understanding, FiveM does not support ES (ECMAScript) or the import declaration.
 
 Once everything is built and Leap has been restarted, you only need to build or restart the specific resource of interest with Leap.
+
+# Development status
+Enables some additional features like resource startup times (preprocessing time and writing time) logging and the `leap rebuild` command
+To enable the development status you need to set the convar `leap:dev` to `1`, Read more about convars here: [Convars - Cfx.re Docs](https://docs.fivem.net/docs/scripting-reference/convars/).
+
+## Documentation of the convar
+| Convar                     | Default | Parameter |
+|----------------------------|---------|--------------|
+| leap:dev       |  0    | int      |
+
+## Example
+server.cfg:
+```
+set leap:dev 1
+```
