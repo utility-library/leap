@@ -93,21 +93,27 @@ if (GetCurrentResourceName() == "leap") {
 
                 let resourcePath = GetResourcePath(res)
 
-                if (vscodeInstalled) {
-                    AddExclusion(resourcePath)
-                }
-
-                let [status, error] = await Command(0, ["restart", res, true])
-                lastBuild[res] = performance.now()
-
-                if (vscodeInstalled) {
-                    RemoveExclusion(resourcePath)
-                }
-
-                if (error) {
-                    cb(status, error)
-                } else {
-                    cb(status)
+                try {
+                    if (vscodeInstalled) {
+                        AddExclusion(resourcePath)
+                    }
+    
+                    let [status, error] = await Command(0, ["restart", res, true])
+                    lastBuild[res] = performance.now()
+    
+                    if (vscodeInstalled) {
+                        RemoveExclusion(resourcePath)
+                    }
+    
+                    if (error) {
+                        cb(status, error)
+                    } else {
+                        cb(status)
+                    }
+                } catch(e) {
+                    console.error(e)
+                    leapBusy.status = false
+                    leapBusy.resource = undefined
                 }
 
                 leapBusy.status = false
