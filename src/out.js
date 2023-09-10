@@ -3442,18 +3442,24 @@ if (GetCurrentResourceName() == "leap") {
         leapBusy.status = true;
         leapBusy.resource = res;
         let resourcePath = GetResourcePath(res);
-        if (vscodeInstalled) {
-          AddExclusion(resourcePath);
-        }
-        let [status, error] = await Command(0, ["restart", res, true]);
-        lastBuild[res] = import_perf_hooks2.performance.now();
-        if (vscodeInstalled) {
-          RemoveExclusion(resourcePath);
-        }
-        if (error) {
-          cb(status, error);
-        } else {
-          cb(status);
+        try {
+          if (vscodeInstalled) {
+            AddExclusion(resourcePath);
+          }
+          let [status, error] = await Command(0, ["restart", res, true]);
+          lastBuild[res] = import_perf_hooks2.performance.now();
+          if (vscodeInstalled) {
+            RemoveExclusion(resourcePath);
+          }
+          if (error) {
+            cb(status, error);
+          } else {
+            cb(status);
+          }
+        } catch (e2) {
+          console.error(e2);
+          leapBusy.status = false;
+          leapBusy.resource = void 0;
         }
         leapBusy.status = false;
         leapBusy.resource = void 0;
