@@ -26,8 +26,18 @@ classBuilder = function(name, prototype, baseClass)
     end
 
     _G[name] = setmetatable({__type = name, __prototype = prototype}, {
+        __index = function(self, key)
+            if self.__prototype.super then
+                return self.__prototype[key] or self.__prototype.super[key]
+            else
+                return self.__prototype[key]
+            end
+        end,
+        __newindex = function(self, k)
+            error("attempt to assign class property '"..k.."' directly, please instantiate the class before assigning any properties", 2)
+        end,
         __call = function(self, ...)
-            local obj = setmetatable(self, {
+            local obj = setmetatable({__type = self.__type, __prototype = self.__prototype}, {
                 __index = function(self, key) 
                     if self.__prototype.super then
                         return self.__prototype[key] or self.__prototype.super[key]
