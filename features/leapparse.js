@@ -349,6 +349,14 @@ let _exports = {}
       };
     }
 
+    , arrowFunctionStatement: function(parameters, body) {
+      return {
+          type: 'ArrowFunctionStatement'
+        , parameters: parameters
+        , body: body
+      };
+    }
+
     , forNumericStatement: function(variable, start, end, step, body) {
       return {
           type: 'ForNumericStatement'
@@ -793,6 +801,7 @@ let _exports = {}
 
       case 61: // =
         if (61 === next) return scanPunctuator('==');
+        if (62 === next) return scanPunctuator('=>');
         return scanPunctuator('=');
 
       case 62: // >
@@ -1495,10 +1504,12 @@ let _exports = {}
 
   function isBlockFollow(token) {
     if (EOF === token.type) return true;
-    if (Keyword !== token.type) return false;
+
+    console.log(token)
     switch (token.value) {
       case 'else': case 'elseif':
       case 'end': case 'until':
+      case '}':
         return true;
       default:
         return false;
@@ -1842,6 +1853,7 @@ let _exports = {}
         block.push(parseStatement(flowContext));
         break;
       }
+      
       statement = parseStatement(flowContext);
       consume(';');
       // Statements are only added if they are returned, this allows us to
@@ -2006,16 +2018,6 @@ let _exports = {}
       consume(';'); // grammar tells us ; is optional here.
     }
     return finishNode(ast.returnStatement(expressions));
-  }
-
-  function parseNewStatement(flowContext) {
-    var expressions = [];
-
-    var expression = parseAssignmentOrCallStatement(flowContext);
-    expressions.push(expression);
-    consume(';'); // grammar tells us ; is optional here.
-
-    return finishNode(ast.newStatement(expressions));
   }
 
   //     if ::= 'if' exp 'then' block {elif} ['else' block] 'end'
@@ -2410,13 +2412,69 @@ let _exports = {}
       }
     }
 
+    flowContext.pushScope(true);
     var body = parseBlock(flowContext);
     flowContext.popScope();
+
     expect('end');
     if (options.scope) destroyScope();
 
     isLocal = isLocal || false;
     return finishNode(ast.functionStatement(name, parameters, isLocal, body));
+  }
+
+  function parseArrowFunctionDeclaration() {
+    var flowContext = makeFlowContext();
+    flowContext.pushScope();
+
+    var parameters = [];
+
+    // The declaration has arguments
+    if (!consume(')')) {
+      // Arguments are a comma separated list of identifiers, optionally ending
+      // with a vararg.
+      while (true) {
+        if (Identifier === token.type) {
+          var marker = trackLocations ? createLocationMarker() : null;
+
+          var parameter = parseIdentifier();
+          var attribute = null;
+
+          if (features.attributes) {
+            attribute = parseTypeAttribute();
+          }
+  
+          if (attribute !== null) {
+            if (trackLocations) pushLocation(marker);
+            parameters.push(finishNode(ast.identifierWithTypeAttribute(parameter, attribute)));
+          } else {
+            // Function parameters are local.
+            if (options.scope) scopeIdentifier(parameter);
+            parameters.push(parameter);
+          }
+
+          if (consume(',')) continue;
+        }
+        // No arguments are allowed after a vararg.
+        else if (VarargLiteral === token.type) {
+          flowContext.allowVararg = true;
+          parameters.push(parsePrimaryExpression(flowContext));
+        } else {
+          raiseUnexpectedToken('<name> or \'...\'', token);
+        }
+        expect(')');
+        break;
+      }
+    }
+
+    expect("=>")
+    expect("{")
+    var body = parseBlock(flowContext);
+    expect("}")
+
+    flowContext.popScope();
+
+    return finishNode(ast.arrowFunctionStatement(parameters, body));
   }
 
   function parseClassExtends() {
@@ -2445,8 +2503,6 @@ let _exports = {}
     }
 
     markLocation(); // add another mark location why we double finish the nodes
-
-    console.log(token)
 
     while (true) {
       markLocation();
@@ -2483,7 +2539,6 @@ let _exports = {}
       break;
     }
 
-    console.log(token)
     expect('}');
 
     let table = finishNode(ast.tableConstructorExpression(fields))
@@ -2679,6 +2734,11 @@ let _exports = {}
       precedence = (Punctuator === token.type || Keyword === token.type) ?
         binaryPrecedence(operator) : 0;
 
+      // Skip => operator why we treat it in a different way.
+      if (Punctuator === token.type && token.value !== "=>") {
+        break
+      }
+
       if (precedence === 0 || precedence <= minPrecedence) break;
       // Right-hand precedence operators
       if ('^' === operator || '..' === operator) --precedence;
@@ -2829,6 +2889,10 @@ let _exports = {}
       next();
       if (options.scope) createScope();
       return parseFunctionDeclaration(null);
+    } else if (consume("(")) {
+      pushLocation(marker);
+      if (options.scope) createScope();
+      return parseArrowFunctionDeclaration()
     } else if (consume('{')) {
       pushLocation(marker);
       return parseTableConstructor(flowContext);

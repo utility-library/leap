@@ -6,6 +6,7 @@ class AstToCode {
         this.code += '\n';
     }
 
+    // TODO: make it actually work
     calculateIndentation(node) {
         const startColumn = node.loc.start.column;
     
@@ -138,6 +139,10 @@ class AstToCode {
                 this.code += ')';
                 return true
 
+            case "ArrowFunctionExpression":
+                this.processNode(node.body);
+                return true
+
             case "TableConstructorExpression":
                 this.code += "{"
                 
@@ -222,6 +227,20 @@ class AstToCode {
                 this.processNodes(node.init, ', ');
                 this.code += ";";
 
+                return true
+
+            case "ArrowFunctionStatement":
+                this.code += ` function(`
+                this.processNodes(node.parameters, ", ")
+                this.code += `) `;
+
+                node.body.forEach(node => this.processNode(node));
+
+                // Check if line needs to be corrected for the closing brace
+                if (this.lineNeedsToBeCorrected(node, true)) {
+                    this.correctLineNumber(node, true)
+                }
+                this.code += ' end ';
                 return true
 
             case "IfStatement":
