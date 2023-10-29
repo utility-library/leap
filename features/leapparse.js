@@ -1504,8 +1504,8 @@ let _exports = {}
 
   function isBlockFollow(token) {
     if (EOF === token.type) return true;
+    if (Keyword !== token.type && Punctuator !== token.type) return false; // Not a keyword or punctuator (why there's the })
 
-    console.log(token)
     switch (token.value) {
       case 'else': case 'elseif':
       case 'end': case 'until':
@@ -2735,7 +2735,7 @@ let _exports = {}
         binaryPrecedence(operator) : 0;
 
       // Skip => operator why we treat it in a different way.
-      if (Punctuator === token.type && token.value !== "=>") {
+      if (Punctuator === token.type && token.value === "=>") {
         break
       }
 
