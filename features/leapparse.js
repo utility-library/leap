@@ -244,6 +244,14 @@ let _exports = {}
       };
     }
 
+    , decoratorStatement: function(base, args) {
+      return {
+          type: 'DecoratorStatement'
+        , base: base
+        , 'arguments': args
+      };
+    }
+
     , returnStatement: function(args) {
       return {
           type: 'ReturnStatement'
@@ -1453,7 +1461,7 @@ let _exports = {}
   // On the other hand, LuaJIT allows arbitrary octets ≥ 128 in identifiers.
 
   function isIdentifierStart(charCode) {
-    if ((charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122) || 95 === charCode)
+    if ((charCode >= 64 && charCode <= 90) || (charCode >= 97 && charCode <= 122) || 95 === charCode) // @-Z, a-z, _ (@ for the decorator keyword)
       return true;
     if (features.extendedIdentifiers && charCode >= 128)
       return true;
@@ -1912,6 +1920,11 @@ let _exports = {}
       }
     }
 
+    // Its a decorator, decorators cant be treated as keywords why they dont have a space between the next token
+    if (token.type == Identifier && token.value.charAt(0) == "@") {
+      return parseDecoratorStatement(flowContext);
+    }
+
     if (features.contextualGoto &&
         token.type === Identifier && token.value === 'goto' &&
         lookahead.type === Identifier && lookahead.value !== 'goto') {
@@ -1959,6 +1972,15 @@ let _exports = {}
 
     flowContext.addGoto(name, gotoToken);
     return finishNode(ast.gotoStatement(label));
+  }
+
+  function parseDecoratorStatement(flowContext) {
+    token.value = token.value.substring(1) // remove the @ (decorator keyword)
+
+    let call = parseAssignmentOrCallStatement(flowContext) // just parse it as a call statement (yeah pretty tricky but works pretty well)
+    let expressionBase = call.expression.base
+
+    return finishNode(ast.decoratorStatement(expressionBase, call.expression.arguments));
   }
 
   //     do ::= 'do' block 'end'
