@@ -11,10 +11,12 @@ import { GetHooks } from './functions/hooking.js'
 //#region Features
 import { Class } from './features/classes.js'
 import { TypeChecking } from './features/typeChecking.js'
+import { Decorator } from "./features/decorator.js";
+
 import AstToCode from './functions/astToCode.js'
 //#endregion
 
-let features = [new Class(), new TypeChecking()]
+let features = [new Class(), new TypeChecking(), new Decorator()]
 
 async function PreprocessFile(filePath) {
     let file = fs.readFileSync(filePath, "utf8");
@@ -31,7 +33,7 @@ async function PreprocessFile(filePath) {
                 if (feature.shouldEdit.call(this, node, parent)) {
                     featuresUsed[feature.constructor.name] = true
                     
-                    feature.edit.call(this, node, parent)
+                    feature.edit.call(this, node, parent, prop, index)
                 }
             }
         },
