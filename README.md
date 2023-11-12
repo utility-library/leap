@@ -25,7 +25,7 @@ Think of it as an effective "modernity" leap into the future to make lua a featu
   - [X] Type checking
   - [ ] Unpack (...)
 
-## Lua GLM (cfxlua) power patches parsing support
+## [Lua GLM (cfxlua)](https://github.com/citizenfx/lua/tree/luaglm-dev/cfx#power-patches) power patches parsing support
   - [X] Compound Operators
   - [X] Safe Navigation
   - [X] In Unpacking
