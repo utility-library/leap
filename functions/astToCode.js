@@ -243,6 +243,13 @@ class AstToCode {
                 this.code += ' end ';
                 return true
 
+            case "CompoundAssignmentStatement":
+                    this.processNode(node.variable);
+                    this.code += ` ${node.operator} `;
+                    this.processNode(node.init);
+    
+                    return true
+
             case "IfStatement":
                 this.processNodes(node.clauses);
 
@@ -298,6 +305,12 @@ class AstToCode {
 
             case "BreakStatement":
                 this.code += "break;"
+                return true
+
+            case "UnpackStatement":
+                this.processNodes(node.variables, ",");
+                this.code += " in "
+                this.processNode(node.table);
                 return true
 
             case "RepeatStatement":

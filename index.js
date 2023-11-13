@@ -12,11 +12,12 @@ import { GetHooks } from './functions/hooking.js'
 import { Class } from './features/classes.js'
 import { TypeChecking } from './features/typeChecking.js'
 import { Decorator } from "./features/decorator.js";
+import { DefaultValue } from "./features/defaultValue.js";
 
 import AstToCode from './functions/astToCode.js'
 //#endregion
 
-let features = [new Class(), new TypeChecking(), new Decorator()]
+let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultValue()]
 
 async function PreprocessFile(filePath) {
     let file = fs.readFileSync(filePath, "utf8");

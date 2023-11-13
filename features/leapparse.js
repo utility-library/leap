@@ -216,6 +216,7 @@ let _exports = {}
     , cannotUseVararg: 'cannot use \'...\' outside a vararg function near \'%1\''
     , invalidCodeUnit: 'code unit U+%1 is not allowed in the current encoding mode'
     , unknownAttribute: 'unknown attribute \'%1\''
+    , compoundAssignment: 'compound assignment with mulitple variables is not supported near \'%1\''
   };
 
   // ### Abstract Syntax Tree
@@ -332,10 +333,27 @@ let _exports = {}
       };
     }
 
+    , unpackStatement: function(table, variables) {
+      return {
+          type: 'UnpackStatement'
+        , table: table
+        , variables: variables
+      };
+    }
+
     , assignmentStatement: function(variables, init) {
       return {
           type: 'AssignmentStatement'
         , variables: variables
+        , init: init
+      };
+    }
+
+    , compoundAssignmentStatement: function(operator, variable, init) {
+      return {
+          type: 'CompoundAssignmentStatement'
+        , operator: operator
+        , variable: variable
         , init: init
       };
     }
@@ -410,6 +428,14 @@ let _exports = {}
       return {
           type: 'Identifier'
         , name: name
+      };
+    }
+
+    , defaultParameterValue: function(parameter, expression) {
+      return {
+          type: 'DefaultParameterValue'
+        , parameter: parameter
+        , expression: expression
       };
     }
 
@@ -763,11 +789,14 @@ let _exports = {}
   function lex() {
     skipWhiteSpace();
 
+    var charCode = input.charCodeAt(index)
+      , next = input.charCodeAt(index + 1);
+
     // Skip comments beginning with --
-    while (45 === input.charCodeAt(index) &&
-           45 === input.charCodeAt(index + 1)) {
+    while ((45 === charCode && 45 === next) || (47 === charCode && 42 === next)) {
       scanComment();
       skipWhiteSpace();
+      break
     }
     if (index >= length) return {
         type : EOF
@@ -776,9 +805,6 @@ let _exports = {}
       , lineStart: lineStart
       , range: [index, index]
     };
-
-    var charCode = input.charCodeAt(index)
-      , next = input.charCodeAt(index + 1);
 
     // Memorize the range index where the token begins.
     tokenStart = index;
@@ -807,20 +833,37 @@ let _exports = {}
         }
         return scanPunctuator('.');
 
+      case 63: // ?
+        if (46 === next) return scanPunctuator('?.'); // ?.
+
       case 61: // =
         if (61 === next) return scanPunctuator('==');
         if (62 === next) return scanPunctuator('=>');
         return scanPunctuator('=');
 
       case 62: // >
-        if (features.bitwiseOperators)
-          if (62 === next) return scanPunctuator('>>');
+        if (features.bitwiseOperators) {
+          if (62 === next) {
+            let _next = input.charCodeAt(index + 2)
+            if (61 === _next) return scanPunctuator('>>=');
+
+            return scanPunctuator('>>')
+          }
+        }
+
         if (61 === next) return scanPunctuator('>=');
         return scanPunctuator('>');
 
       case 60: // <
-        if (features.bitwiseOperators)
-          if (60 === next) return scanPunctuator('<<');
+        if (features.bitwiseOperators) {
+          if (60 === next) {
+            let _next = input.charCodeAt(index + 2)
+            if (61 === _next) return scanPunctuator('<<=');
+
+            return scanPunctuator('<<');
+          }
+        }
+
         if (61 === next) return scanPunctuator('<=');
         return scanPunctuator('<');
 
@@ -844,16 +887,23 @@ let _exports = {}
         // Check for integer division op (//)
         if (features.integerDivision)
           if (47 === next) return scanPunctuator('//');
+          if (61 === next) return scanPunctuator("/=");
         return scanPunctuator('/');
 
       case 38: case 124: // & |
+        if (61 === next) return scanPunctuator(input.charAt(index)+ "=");
+
         if (!features.bitwiseOperators)
           break;
 
         /* fall through */
-      case 42: case 94: case 37: case 44: case 123: case 125:
-      case 93: case 40: case 41: case 59: case 35: case 45:
-      case 43: // * ^ % , { } ] ( ) ; # - +
+      case 37: case 44: case 123: case 125:
+      case 93: case 40: case 41: case 59: case 35: // % , { } ] ( ) ; #
+        return scanPunctuator(input.charAt(index));
+      
+      // + - * 
+      case 45: case 43: case 42: case 94: // - + * ^ 
+        if (61 === next) return scanPunctuator(input.charAt(index)+ "=");
         return scanPunctuator(input.charAt(index));
     }
 
@@ -1303,7 +1353,7 @@ let _exports = {}
     return input.charAt(index++);
   }
 
-  // Comments begin with -- after which it will be decided if they are
+  // Comments begin with -- (or /*, cfxlua (luaglm)) after which it will be decided if they are
   // multiline comments or not.
   //
   // The multiline functionality works the exact same way as with string
@@ -1320,12 +1370,14 @@ let _exports = {}
       , lineStartComment = lineStart
       , lineComment = line;
 
-    if ('[' === character) {
+
+    if ('[' === character || "/" === input.charAt(tokenStart)) {
       content = readLongString(true);
       // This wasn't a multiline comment after all.
       if (false === content) content = character;
       else isLong = true;
     }
+
     // Scan until next line as long as it's not a multiline comment.
     if (!isLong) {
       while (index < length) {
@@ -1363,34 +1415,43 @@ let _exports = {}
       , terminator = false
       , character, stringStart, firstLine = line;
 
-    ++index; // [
+    if ("[" == input.charAt(index)) {
+      ++index; // [
 
-    // Calculate the depth of the comment.
-    while ('=' === input.charAt(index + level)) ++level;
-    // Exit, this is not a long string afterall.
-    if ('[' !== input.charAt(index + level)) return false;
+      // Calculate the depth of the comment.
+      while ('=' === input.charAt(index + level)) ++level;
+      // Exit, this is not a long string afterall.
+      if ('[' !== input.charAt(index + level)) return false;
 
-    index += level + 1;
+      index += level + 1;
+    }
 
     // If the first character is a newline, ignore it and begin on next line.
     if (isLineTerminator(input.charCodeAt(index))) consumeEOL();
 
+    
     stringStart = index;
     while (index < length) {
       // To keep track of line numbers run the `consumeEOL()` which increments
       // its counter.
       while (isLineTerminator(input.charCodeAt(index))) consumeEOL();
 
-      character = input.charAt(index++);
+      character = input.charAt(index);
+      index += 1; 
 
       // Once the delimiter is found, iterate through the depth count and see
       // if it matches.
+
       if (']' === character) {
         terminator = true;
         for (var i = 0; i < level; ++i) {
           if ('=' !== input.charAt(index + i)) terminator = false;
         }
         if (']' !== input.charAt(index + level)) terminator = false;
+      }
+      
+      if ("*" === character && "/" === input.charAt(index)) { // index its already added by 1, so we just reget it
+        terminator = true
       }
 
       // We reached the end of the multiline string. Get out now.
@@ -1934,7 +1995,7 @@ let _exports = {}
     // Assignments memorizes the location and pushes it manually for wrapper nodes.
     if (trackLocations) locations.pop();
 
-    return parseAssignmentOrCallStatement(flowContext);
+    return parseAssignmentOrCallStatementOrArrowFunction(flowContext);
   }
 
   // ## Statements
@@ -1977,7 +2038,7 @@ let _exports = {}
   function parseDecoratorStatement(flowContext) {
     token.value = token.value.substring(1) // remove the @ (decorator keyword)
 
-    let call = parseAssignmentOrCallStatement(flowContext) // just parse it as a call statement (yeah pretty tricky but works pretty well)
+    let call = parseAssignmentOrCallStatementOrArrowFunction(flowContext) // just parse it as a call statement (yeah pretty tricky but works pretty well)
     let expressionBase = call.expression.base
 
     return finishNode(ast.decoratorStatement(expressionBase, call.expression.arguments));
@@ -2242,6 +2303,24 @@ let _exports = {}
     }
   }
 
+  function parseCompoundAssignmentStatement(flowContext, startMarker, identifiers) {
+    var operator = token;
+
+    if (identifiers.length > 1) {
+      raise(token, errors.compoundAssignment, identifiers[0].name);
+    }
+    next();
+
+    var init = parseExpectedExpression(flowContext)
+
+    if (consume(",")) {
+      unexpected(token);
+    }
+
+    pushLocation(startMarker);
+    return finishNode(ast.compoundAssignmentStatement(operator.value, identifiers[0], init))
+  }
+
   //     assignment ::= varlist '=' explist
   //     var ::= Name | prefixexp '[' exp ']' | prefixexp '.' Name
   //     varlist ::= var {',' var}
@@ -2250,7 +2329,7 @@ let _exports = {}
   //     call ::= callexp
   //     callexp ::= prefixexp args | prefixexp ':' Name args
 
-  function parseAssignmentOrCallStatement(flowContext) {
+  function parseAssignmentOrCallStatementOrArrowFunction(flowContext) {
     // Keep a reference to the previous token for better error messages in case
     // of invalid statement
     var previous = token
@@ -2261,6 +2340,7 @@ let _exports = {}
 
     if (trackLocations) startMarker = createLocationMarker();
 
+    // Read bases (targets)
     do {
       if (trackLocations) marker = createLocationMarker();
 
@@ -2272,9 +2352,18 @@ let _exports = {}
         lvalue = true;
       } else if ('(' === token.value) {
         next();
-        base = parseExpectedExpression(flowContext);
-        expect(')');
-        lvalue = false;
+
+        if (Identifier === token.type) {
+          name = token.value;
+          base = parseIdentifier();
+          // Set the parent scope.
+          if (options.scope) attachScope(base, scopeHasName(name));
+          lvalue = true;
+        } else {
+          base = parseExpectedExpression(flowContext);
+          expect(')')
+          lvalue = false;
+        }
       } else {
         return unexpected(token);
       }
@@ -2301,7 +2390,6 @@ let _exports = {}
       }
 
       targets.push(base);
-
       if (',' !== token.value)
         break;
 
@@ -2312,6 +2400,7 @@ let _exports = {}
       next();
     } while (true);
 
+
     if (targets.length === 1 && lvalue === null) {
       pushLocation(marker);
       return finishNode(ast.callStatement(targets[0]));
@@ -2319,18 +2408,46 @@ let _exports = {}
       return unexpected(token);
     }
 
-    expect('=');
+    if (lookahead.value == '=>') { // Arrow function
+      if (trackLocations) marker = createLocationMarker();
 
-    var values = [];
+      var flowContext = makeFlowContext();
+      flowContext.pushScope();
 
-    do {
-      consume("new") // If token is "new" skip it to the next one (the actual expression)
+      next();
+      consume("=>")
+      consume("{")
+      var body = parseBlock(flowContext);
+      consume("}")
+  
+      flowContext.popScope();
+  
+      pushLocation(marker);
+      return finishNode(ast.arrowFunctionStatement(targets, body));
 
-      values.push(parseExpectedExpression(flowContext));
-    } while (consume(','));
+    } if (token.value.length == 2 || token.value.length == 3) { // support for compound assignments (from luaglm, see https://github.com/citizenfx/lua/tree/luaglm-dev/cfx)
+      if (consume("in")) {
+        let table = parseIdentifier();
+        pushLocation(startMarker);
+        return finishNode(ast.unpackStatement(table, targets))
+      } else {
+        return parseCompoundAssignmentStatement(flowContext, startMarker, targets)
+      }
 
-    pushLocation(startMarker);
-    return finishNode(ast.assignmentStatement(targets, values));
+    } else {
+      expect('=');
+
+      var values = [];
+  
+      do {
+        consume("new") // If token is "new" skip it to the next one (the actual expression)
+  
+        values.push(parseExpectedExpression(flowContext));
+      } while (consume(','));
+  
+      pushLocation(startMarker);
+      return finishNode(ast.assignmentStatement(targets, values));
+    }
   }
 
   // ### Non-statements
@@ -2404,11 +2521,18 @@ let _exports = {}
         if (Identifier === token.type) {
           var marker = trackLocations ? createLocationMarker() : null;
 
-          var parameter = parseIdentifier();
+          var parameter = parseIdentifier(flowContext);
           var attribute = null;
 
           if (features.attributes) {
             attribute = parseTypeAttribute();
+          }
+
+          if (consume("=")) {
+            var expression = parseExpectedExpression(flowContext);
+
+            if (trackLocations) pushLocation(marker);
+            parameter = finishNode(ast.defaultParameterValue(parameter, expression));
           }
   
           if (attribute !== null) {
@@ -2445,59 +2569,7 @@ let _exports = {}
     return finishNode(ast.functionStatement(name, parameters, isLocal, body));
   }
 
-  function parseArrowFunctionDeclaration() {
-    var flowContext = makeFlowContext();
-    flowContext.pushScope();
 
-    var parameters = [];
-
-    // The declaration has arguments
-    if (!consume(')')) {
-      // Arguments are a comma separated list of identifiers, optionally ending
-      // with a vararg.
-      while (true) {
-        if (Identifier === token.type) {
-          var marker = trackLocations ? createLocationMarker() : null;
-
-          var parameter = parseIdentifier();
-          var attribute = null;
-
-          if (features.attributes) {
-            attribute = parseTypeAttribute();
-          }
-  
-          if (attribute !== null) {
-            if (trackLocations) pushLocation(marker);
-            parameters.push(finishNode(ast.identifierWithTypeAttribute(parameter, attribute)));
-          } else {
-            // Function parameters are local.
-            if (options.scope) scopeIdentifier(parameter);
-            parameters.push(parameter);
-          }
-
-          if (consume(',')) continue;
-        }
-        // No arguments are allowed after a vararg.
-        else if (VarargLiteral === token.type) {
-          flowContext.allowVararg = true;
-          parameters.push(parsePrimaryExpression(flowContext));
-        } else {
-          raiseUnexpectedToken('<name> or \'...\'', token);
-        }
-        expect(')');
-        break;
-      }
-    }
-
-    expect("=>")
-    expect("{")
-    var body = parseBlock(flowContext);
-    expect("}")
-
-    flowContext.popScope();
-
-    return finishNode(ast.arrowFunctionStatement(parameters, body));
-  }
 
   function parseClassExtends() {
     var base, marker;
@@ -2792,11 +2864,12 @@ let _exports = {}
           expression = parseExpectedExpression(flowContext);
           expect(']');
           return finishNode(ast.indexExpression(base, expression));
-        case '.':
+        case '.': case '?.':
+          var operator = token.value;
           pushLocation(marker);
           next();
           identifier = parseIdentifier();
-          return finishNode(ast.memberExpression(base, '.', identifier));
+          return finishNode(ast.memberExpression(base, operator, identifier));
         case ':':
           pushLocation(marker);
           next();
@@ -2911,10 +2984,6 @@ let _exports = {}
       next();
       if (options.scope) createScope();
       return parseFunctionDeclaration(null);
-    } else if (consume("(")) {
-      pushLocation(marker);
-      if (options.scope) createScope();
-      return parseArrowFunctionDeclaration()
     } else if (consume('{')) {
       pushLocation(marker);
       return parseTableConstructor(flowContext);
