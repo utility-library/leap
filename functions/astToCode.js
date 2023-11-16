@@ -308,9 +308,16 @@ class AstToCode {
                 return true
 
             case "UnpackStatement":
-                this.processNodes(node.variables, ",");
-                this.code += " in "
-                this.processNode(node.table);
+                if (node.variables) {
+                  this.processNodes(node.variables, ",");
+                  this.code += " in "
+                  this.processNode(node.table);
+                } else {
+                  this.code += " table.unpack("
+                  this.processNode(node.table);
+                  this.code += ") "
+                }
+            
                 return true
 
             case "RepeatStatement":

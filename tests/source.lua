@@ -1,1 +1,1 @@
-a,b,c in t
+a,b,c = ...t

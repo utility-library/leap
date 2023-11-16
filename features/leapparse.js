@@ -872,7 +872,7 @@ let _exports = {}
         if (!features.bitwiseOperators)
           break;
         return scanPunctuator('~');
-      
+
       case 58: // :
         if (features.labels)
           if (58 === next) return scanPunctuator('::');
@@ -900,7 +900,7 @@ let _exports = {}
       case 37: case 44: case 123: case 125:
       case 93: case 40: case 41: case 59: case 35: // % , { } ] ( ) ; #
         return scanPunctuator(input.charAt(index));
-      
+
       // + - * 
       case 45: case 43: case 42: case 94: // - + * ^ 
         if (61 === next) return scanPunctuator(input.charAt(index)+ "=");
@@ -1429,7 +1429,7 @@ let _exports = {}
     // If the first character is a newline, ignore it and begin on next line.
     if (isLineTerminator(input.charCodeAt(index))) consumeEOL();
 
-    
+
     stringStart = index;
     while (index < length) {
       // To keep track of line numbers run the `consumeEOL()` which increments
@@ -1449,7 +1449,7 @@ let _exports = {}
         }
         if (']' !== input.charAt(index + level)) terminator = false;
       }
-      
+
       if ("*" === character && "/" === input.charAt(index)) { // index its already added by 1, so we just reget it
         terminator = true
       }
@@ -1895,7 +1895,7 @@ let _exports = {}
 
     if (options.scope) destroyScope();
     if (EOF !== token.type) unexpected(token);
-    
+
     // If the body is empty no previousToken exists when finishNode runs.
     if (trackLocations && !body.length) 
     previousToken = token;
@@ -1922,7 +1922,7 @@ let _exports = {}
         block.push(parseStatement(flowContext));
         break;
       }
-      
+
       statement = parseStatement(flowContext);
       consume(';');
       // Statements are only added if they are returned, this allows us to
@@ -2341,7 +2341,7 @@ let _exports = {}
     if (trackLocations) startMarker = createLocationMarker();
 
     // Read bases (targets)
-    do {
+    do {      
       if (trackLocations) marker = createLocationMarker();
 
       if (Identifier === token.type) {
@@ -2402,6 +2402,7 @@ let _exports = {}
 
 
     if (targets.length === 1 && lvalue === null) {
+      console.log("Call")
       pushLocation(marker);
       return finishNode(ast.callStatement(targets[0]));
     } else if (!lvalue) {
@@ -2419,13 +2420,13 @@ let _exports = {}
       consume("{")
       var body = parseBlock(flowContext);
       consume("}")
-  
+
       flowContext.popScope();
-  
+
       pushLocation(marker);
       return finishNode(ast.arrowFunctionStatement(targets, body));
 
-    } if (token.value.length == 2 || token.value.length == 3) { // support for compound assignments (from luaglm, see https://github.com/citizenfx/lua/tree/luaglm-dev/cfx)
+    } if (token.value.length == 2 || token.value.length == 3) { // support for compound assignments (from luaglm, see https://github.com/citizenfx/lua/tree/luaglm-dev/cfx)      
       if (consume("in")) {
         let table = parseIdentifier();
         pushLocation(startMarker);
@@ -2438,13 +2439,26 @@ let _exports = {}
       expect('=');
 
       var values = [];
-  
+
       do {
         consume("new") // If token is "new" skip it to the next one (the actual expression)
-  
-        values.push(parseExpectedExpression(flowContext));
+        var unpack;
+        
+        if (token.type == VarargLiteral) {
+          consume(token.value)
+          unpack = true
+        }
+
+        let value = parseExpectedExpression(flowContext)
+
+        if (unpack) {
+          pushLocation(startMarker);
+          values.push(finishNode(ast.unpackStatement(value)))
+        } else {
+          values.push(value);
+        }
       } while (consume(','));
-  
+
       pushLocation(startMarker);
       return finishNode(ast.assignmentStatement(targets, values));
     }
@@ -2534,7 +2548,7 @@ let _exports = {}
             if (trackLocations) pushLocation(marker);
             parameter = finishNode(ast.defaultParameterValue(parameter, expression));
           }
-  
+
           if (attribute !== null) {
             if (trackLocations) pushLocation(marker);
             parameters.push(finishNode(ast.identifierWithTypeAttribute(parameter, attribute)));
@@ -2624,7 +2638,7 @@ let _exports = {}
         }
         fields.push(finishNode(ast.tableValue(value)));
       }
-      
+
       if (',;'.indexOf(token.value) >= 0) {
         next();
         continue;
@@ -2811,7 +2825,7 @@ let _exports = {}
     if (null == expression) {
       // PrimaryExpression
       expression = parsePrimaryExpression(flowContext);
-      
+
       // PrefixExpression
       if (null == expression) {
         expression = parsePrefixExpression(flowContext);
