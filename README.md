@@ -23,7 +23,7 @@ Think of it as an effective "modernity" leap into the future to make lua a featu
   - [X] New keyword
   - [X] Not equal (!=)
   - [X] Type checking
-  - [ ] Unpack (...)
+  - [X] Unpack (...)
 
 ## [Lua GLM (cfxlua)](https://github.com/citizenfx/lua/tree/luaglm-dev/cfx#power-patches) power patches parsing support
   - [X] Compound Operators
