@@ -1,8 +1,7 @@
-import luaparser from '../features/leapparse.js';
 import luaparse from "../features/leapparse.js"
 
 import luamin from "luamin";
-var ast = luaparser.ast
+var ast = luaparse.ast
 
 
 function declareAstFunction(name, params, loc) {

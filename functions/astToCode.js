@@ -18,7 +18,11 @@ class AstToCode {
     }
 
     lineNeedsToBeCorrected(node, end) {
-        if (!node.loc?.start || !node.loc?.end) {
+        if (!node) {
+            throw new Error("lineNeedsToBeCorrected: node is null")
+        }
+
+        if (!node.loc || !node.loc.start || !node.loc.end) {
             throw new Error("lineNeedsToBeCorrected: node doesn't have loc, "+JSON.stringify(node))
             
         }
@@ -244,11 +248,39 @@ class AstToCode {
                 return true
 
             case "CompoundAssignmentStatement":
-                    this.processNode(node.variable);
-                    this.code += ` ${node.operator} `;
-                    this.processNode(node.init);
-    
-                    return true
+                this.processNode(node.variable);
+                this.code += ` ${node.operator} `;
+                this.processNode(node.init);
+
+                return true
+
+            case "InStatement":
+                this.code += "leap_in("
+                this.processNode(node.left);
+                this.code += ", ";
+
+                if (node.right.type == "Identifier") {
+                    this.processNode(node.right);
+                    this.code += ")"
+                } else {
+                    switch (node.right.type) {
+                        case "MemberExpression":
+                            this.processNode(node.right.base)
+                            this.code += ", ";
+                            this.code += `"${node.right.identifier.name}"`; // process it as a string
+                            break;
+                        case "IndexExpression":
+                            this.processNode(node.right.base)
+                            this.code += ", ";
+                            
+                            this.processNode(node.right.index);
+                            break;
+                    }
+
+                    this.code += ")"
+                }
+
+                return true
 
             case "IfStatement":
                 this.processNodes(node.clauses);

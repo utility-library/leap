@@ -13,11 +13,12 @@ import { Class } from './features/classes.js'
 import { TypeChecking } from './features/typeChecking.js'
 import { Decorator } from "./features/decorator.js";
 import { DefaultValue } from "./features/defaultValue.js";
+import { In } from "./features/in.js";
 
 import AstToCode from './functions/astToCode.js'
 //#endregion
 
-let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultValue()]
+let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultValue(), new In()]
 
 async function PreprocessFile(filePath) {
     let file = fs.readFileSync(filePath, "utf8");
@@ -47,7 +48,7 @@ async function PreprocessFile(filePath) {
         }
 
         hooks[featureName].map((contentAst) => {
-            ast.body.unshift(contentAst.body[0])
+            ast.body.unshift(...contentAst.body)
         })
     }
 
@@ -60,7 +61,6 @@ async function PreprocessFile(filePath) {
 
 let timer = Date.now()
 let preprocessed = await PreprocessFile("tests/source.lua")
-//console.log(preprocessed)
 fs.writeFileSync("tests/preprocessed.lua", preprocessed)
 
 console.log("Execution time:"+ (Date.now() - timer) + "ms")

@@ -324,6 +324,14 @@ let _exports = {}
       };
     }
 
+    , inStatement: function(left, right) {
+      return {
+          type: 'InStatement'
+        , left: left
+        , right: right
+      };
+    }
+
     , classStatement: function(identifier, body, extend) {
       return {
           type: 'ClassStatement'
@@ -2118,6 +2126,7 @@ let _exports = {}
       marker = locations[locations.length - 1];
       locations.push(marker);
     }
+
     condition = parseExpectedExpression(flowContext);
     expect('then');
     if (options.scope) createScope();
@@ -2270,7 +2279,6 @@ let _exports = {}
       if (consume('=')) {
         do {
           consume("new") // If token is "new" skip it to the next one (the actual expression)
-
           var expression = parseExpectedExpression(flowContext);
           init.push(expression);
         } while (consume(','));
@@ -2301,6 +2309,19 @@ let _exports = {}
     } else {
       raiseUnexpectedToken('<name>', token);
     }
+  }
+
+  function parseInStatement(flowContext) {
+    var marker;
+
+    if (trackLocations) marker = createLocationMarker();
+    if (trackLocations) pushLocation(marker);
+
+    token = previousToken; // reparse previous token
+    var left = parseExpectedExpression(flowContext);
+    var right = parseExpectedExpression(flowContext);
+
+    return finishNode(ast.inStatement(left, right));
   }
 
   function parseCompoundAssignmentStatement(flowContext, startMarker, identifiers) {
@@ -2402,7 +2423,6 @@ let _exports = {}
 
 
     if (targets.length === 1 && lvalue === null) {
-      console.log("Call")
       pushLocation(marker);
       return finishNode(ast.callStatement(targets[0]));
     } else if (!lvalue) {
@@ -2811,6 +2831,7 @@ let _exports = {}
     // The left-hand side in binary operations.
       , expression, marker;
 
+
     if (trackLocations) marker = createLocationMarker();
 
     // UnaryExpression
@@ -2851,6 +2872,7 @@ let _exports = {}
       // Right-hand precedence operators
       if ('^' === operator || '..' === operator) --precedence;
       next();
+
       var right = parseSubExpression(precedence, flowContext);
       if (null == right) raiseUnexpectedToken('<expression>', token);
       // Push in the marker created before the loop to wrap its entirety.
@@ -2988,7 +3010,10 @@ let _exports = {}
       raise(token, errors.cannotUseVararg, token.value);
     }
 
-    if (type & literals) {
+    if (Keyword === lookahead.type && "in" === lookahead.value) {
+      next();
+      return parseInStatement(flowContext);
+    } else if (type & literals) {
       pushLocation(marker);
       var raw = input.slice(token.range[0], token.range[1]);
       next();
