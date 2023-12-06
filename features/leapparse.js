@@ -411,6 +411,16 @@ let _exports = {}
       };
     }
 
+    , tableComprehensionStatement: function(variables, iterators, statements, conditions) {
+      return {
+          type: 'TableComprehensionStatement'
+        , variables: variables
+        , iterators: iterators
+        , statements: statements
+        , conditions: conditions
+      };
+    }
+
     , chunk: function(body) {
       return {
           type: 'Chunk'
@@ -2236,6 +2246,49 @@ let _exports = {}
     }
   }
 
+  function parseTableComprehensionStatement(statements, flowContext) {
+    var variable = parseIdentifier()
+      , iterators = []
+      , conditions = [];
+
+    // The start-identifier is local.
+
+    if (options.scope) {
+      createScope();
+      scopeIdentifier(variable);
+    }
+
+    // Like Generic For Statement
+    // The namelist can contain one or more identifiers.
+    var variables = [variable];
+    while (consume(',')) {
+      variable = parseIdentifier();
+      // Each variable in the namelist is locally scoped.
+      if (options.scope) scopeIdentifier(variable);
+      variables.push(variable);
+    }
+    expect('in');
+
+    // One or more expressions in the explist.
+    do {
+      var expression = parseExpectedExpression(flowContext);
+      iterators.push(expression);
+    } while (consume(','));
+
+    // Parse conditions
+    while (consume('if')) {
+      var condition = parseExpectedExpression(flowContext);
+
+      conditions.push(condition)
+    }
+
+    if (options.scope) destroyScope();
+
+    return finishNode(ast.tableComprehensionStatement(variables, iterators, statements, conditions));
+  }
+
+
+
   // Local statements can either be variable assignments or function
   // definitions. If a function definition is found, it will be delegated to
   // `parseFunctionDeclaration()` with the isLocal flag.
@@ -2747,8 +2800,21 @@ let _exports = {}
       }
       break;
     }
-    expect('}');
-    return finishNode(ast.tableConstructorExpression(fields));
+    
+    if (consume("for")) {
+      let statements = []
+      for (let field of fields) {
+        statements.push(field.value)
+      }
+
+      var tableComprehension = parseTableComprehensionStatement(statements, flowContext)
+      consume("}")
+      
+      return tableComprehension
+    } else {
+      expect('}');
+      return finishNode(ast.tableConstructorExpression(fields));
+    }
   }
 
   // Expression parser

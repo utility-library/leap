@@ -1,6 +1,11 @@
 class AstToCode {
     code = ""
     currentLine = 1
+    lineCorrection = true
+
+    constructor(lineCorrection = true) {
+        this.lineCorrection = lineCorrection
+    }
 
     addNewLine() {
         this.code += '\n';
@@ -24,7 +29,10 @@ class AstToCode {
 
         if (!node.loc || !node.loc.start || !node.loc.end) {
             throw new Error("lineNeedsToBeCorrected: node doesn't have loc, "+JSON.stringify(node))
-            
+        }
+
+        if (!this.lineCorrection) {
+            return false
         }
 
         let line = end ? node.loc.end.line : node.loc.start.line
@@ -89,7 +97,8 @@ class AstToCode {
                 return true
 
             case 'FunctionDeclaration':
-                this.code += ` function ${node.identifier?.name || ""}(`
+                this.code += `${node.identifier?.name ? "" : "("} function ${node.identifier?.name  || ""}(`
+
                 this.processNodes(node.parameters, ", ")
                 this.code += `) `;
 
@@ -99,7 +108,7 @@ class AstToCode {
                 if (this.lineNeedsToBeCorrected(node, true)) {
                     this.correctLineNumber(node, true)
                 }
-                this.code += ' end ';
+                this.code += ` end${node.identifier?.name ? "": ")"}`;
                 return true
 
             default:
@@ -289,10 +298,17 @@ class AstToCode {
                 this.code += " end;"
                 return true
 
+            case "TableComprehensionGenericStatement":
+                this.code += "(function()"
+
+                this.code += ")()"
+
             case "IfClause": 
                 this.code += " if "
+
                 this.processNode(node.condition);
                 this.code += " then "
+
                 this.processNodes(node.body);
                 return true
 
@@ -427,9 +443,11 @@ class AstToCode {
         throw new Error("Unhandled node type: " + node.type)
     }
 
-    processAst = async function(ast) {
+    processAst(ast) {
+        this.code = ""
+        this.currentLine = 1
         
-        await this.processNode(ast)
+        this.processNode(ast)
         return this.code
     }
 }

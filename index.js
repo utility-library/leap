@@ -14,11 +14,12 @@ import { TypeChecking } from './features/typeChecking.js'
 import { Decorator } from "./features/decorator.js";
 import { DefaultValue } from "./features/defaultValue.js";
 import { In } from "./features/in.js";
+import { TableComprehension } from "./features/tableComprehension.js";
 
 import AstToCode from './functions/astToCode.js'
 //#endregion
 
-let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultValue(), new In()]
+let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultValue(), new In(), new TableComprehension()]
 
 async function PreprocessFile(filePath) {
     let file = fs.readFileSync(filePath, "utf8");
