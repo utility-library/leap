@@ -1,33 +1,16 @@
--- Table in (with key)
+local tab = {test = 5, test2 = 10};
 
-local a = {
-    {
-        id = 1
-    },
-    {
-        id = 2
-    },
-    {
-        id = 3
-    }
-}
+-- Key value tables
+local a = {k, v*2 for k, v in pairs(tab)};
 
-if 2 in a.id then
-    print("2 in a")
+-- Array like tables (only 1 statement)
+local b = {"element:"..k for k, v in pairs(tab)};
+
+-- Just for check the results
+for k,v in pairs(a) do
+    print(k,v)
 end
 
--- Array in
-
-local b = {1, 2, 3, 4, 5}
-
-if 2 in b then
-    print("2 in b")
-end
-
--- String in
-
-local c = "hello"
-
-if "hel" in c then
-    print("c contains the string hel")
+for k,v in pairs(b) do
+    print(k,v)
 end
