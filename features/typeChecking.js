@@ -1,50 +1,59 @@
 import {BasicFeature} from './basicFeature.js'
-import luaparser from './leapparse.js';
-import {declareAstFunction, markLoc} from "../functions/utils.js";
+import {codeToAst, formatAst} from "../functions/utils.js";
+import { DefaultValue } from './defaultValue.js';
 
-var ast = luaparser.ast
+var bakedAst = codeToAst(`
+    if type(PARAM) ~= "TYPE" then
+        if _G[PARAM] and type(_G[PARAM]) == "table" and _G[PARAM].__prototype then
+            if not leap or not leap.deserialize then
+                error("leap.deserialize not found, make sure you have some class loaded", 2)
+            end
 
-// type(param) == "type"
-function CheckForType(node) {
-    var typeLiteral = markLoc(ast.literal(luaparser.tokenTypes.StringLiteral, node.attribute.name, '\"'+node.attribute.name+'\"'), node.loc)
-    var typeFunction = declareAstFunction("type", [node.name], node.loc)
+            PARAM = leap.deserialize(PARAM)
+        else
+            error("PARAM_NAME: TYPE expected, got " .. type(PARAM))
+        end
+    end
+`)
 
-    var equal = markLoc(ast.binaryExpression("==", typeFunction, typeLiteral), node.loc)
-
-    return equal
-}
-
-// "param: type expected, got " .. type(param)
-function ErrorMessage(node) {
-    var errorMsg = `${node.name.name}: ${node.attribute.name} expected, got `
-    var typeFunction = declareAstFunction("type", [node.name], node.loc)
-
-    var errorString = markLoc(ast.literal(luaparser.tokenTypes.StringLiteral, errorMsg, '\"'+errorMsg+'\"'), node.loc)
-    var errorConcatWithType = markLoc(ast.binaryExpression("..", errorString, typeFunction), node.loc)
-
-    return errorConcatWithType
-}
-
-// assert(type(param) == "type", "param: type expected, got " .. type(param))
-function AssertType(node, type, errorMsg) {
-    var assert = declareAstFunction("assert", [type, errorMsg], node.loc)
-
-    return assert
-}
 
 class TypeChecking extends BasicFeature {
     shouldEdit(node, parent) {
         return node.type === "IdentifierWithTypeAttribute"
     }
     edit(node, parent) {
-        var type = CheckForType(node)
-        var errorMsg = ErrorMessage(node)
-        var assert = AssertType(node, type, errorMsg)
+        var _ast;
 
-        parent.body.unshift(assert) // add before the rest of the code
+        if (node.name.type == "DefaultParameterValue") {
+            _ast = formatAst(bakedAst, {
+                name: {
+                    PARAM: node.name.parameter.name
+                },
+                raw: {
+                    PARAM_NAME: node.name.parameter.name,
+                    TYPE: node.attribute.name,
+                }
+            }, node.loc)
 
-        // replace the "identifier with attribute" with only the basic "identifier" (in the function parameters)
-        this.replace(node.name)
+            parent.body.unshift(_ast) // add type checking before (default value is going to unshift and therefore end up being first)
+
+            var defaultValue = new DefaultValue()
+            defaultValue.edit.call(this, node.name, parent)
+        } else {
+            _ast = formatAst(bakedAst, {
+                name: {
+                    PARAM: node.name.name
+                },
+                raw: {
+                    PARAM_NAME: node.name.name,
+                    TYPE: node.attribute.name,
+                }
+            }, node.loc)
+
+            // replace the "identifier with attribute" with only the basic "identifier" (in the function parameters)
+            this.replace(node.name)
+            parent.body.unshift(_ast) // add before the rest of the code
+        }
     }
 }
 
