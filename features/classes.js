@@ -33,32 +33,78 @@ classBuilder = function(name, prototype, baseClass)
                 return self.__prototype[key]
             end
         end,
-        __newindex = function(self, k)
-            error("attempt to assign class property '"..k.."' directly, please instantiate the class before assigning any properties", 2)
+        __newindex = function(self, k, v)
+			if k:sub(1, 2) == "__" then
+				rawset(self, k, v)
+			else
+				error("attempt to assign class property '"..k.."' directly, please instantiate the class before assigning any properties", 2)
+			end
         end,
         __call = function(self, ...)
-            local obj = setmetatable({__type = self.__type, __prototype = self.__prototype}, {
-                __index = function(self, key) 
+            -- Create new object
+            local obj = setmetatable({__type = self.__type}, {
+                __index = function(_self, key) 
                     if self.__prototype.super then
                         return self.__prototype[key] or self.__prototype.super[key]
                     else
                         return self.__prototype[key]
                     end
                 end,
-                __gc = function(self)
-                    if self.destructor then
-                        self:destructor()
+                __gc = function(_self)
+                    if _self.destructor then
+                        _self:destructor()
                     end
                 end
             })
     
-            if obj.constructor then
-                obj:constructor(...)
+            if not self.__skipNextConstructor then
+                if obj.constructor then
+                    obj:constructor(...)
+                end
+            else
+                self.__skipNextConstructor = nil
             end
     
             return obj
         end
     })
+end
+
+if not leap then leap = {} end
+
+-- Function to deserialize objects (example: objects sended over the network)
+leap.deserialize = function(class)
+    if type(class) == "table" and class.__type then
+        local _class = _G[class.__type]
+
+        if _class then
+            _class.__skipNextConstructor = true -- Skip next constructor call
+            local obj = _class()
+
+            -- Copy all properties to the new instantiated object
+            for k, v in pairs(class) do
+                obj[k] = v
+            end
+
+			return obj
+        else
+            error("Class '"..class.__type.."' not found", 2)
+        end
+    end
+end
+
+-- Type override (allow custom types)
+if not _type then
+    _type = type -- we preserve the original "type" function
+    type = function(var)
+        local realType = _type(var)
+
+        if realType == "table" and var.__type then
+            return var.__type
+        else
+            return realType
+        end
+    end
 end
 `
 
