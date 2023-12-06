@@ -1,3 +1,4 @@
+import { walk } from "estree-walker";
 import luaparse from "../features/leapparse.js"
 
 import luamin from "luamin";
@@ -23,6 +24,43 @@ function markLoc(block, loc) {
     return block
 }
 
+function markAstLoc(ast, loc) {
+    walk(ast, {
+        enter(node) {
+            node.loc = loc
+        }
+    })
+
+    return ast
+}
+
+function formatAst(ast, replace, loc) {
+    walk(ast, {
+        enter(node) {
+            // Replace every node occurence
+            for (const [nodeKey, toReplace] of Object.entries(replace)) {
+                if (node[nodeKey]) {
+
+                    if (nodeKey == "raw") {
+                        for (const [key, value] of Object.entries(toReplace)) {
+                            node[nodeKey] = node[nodeKey].replace(key, value)
+                        }
+                    } else {
+                        // Replace the value that need to be replaced
+                        node[nodeKey] = toReplace[node[nodeKey]] || node[nodeKey]
+                    }
+                }
+            }
+
+            if (loc) {
+                node.loc = loc
+            }
+        }
+    })
+
+    return structuredClone(ast)
+}
+
 function codeToAst(code) {
     code = luamin.minify(code)
 
@@ -35,5 +73,7 @@ function codeToAst(code) {
 export {
     declareAstFunction,
     markLoc,
+    markAstLoc,
+    formatAst,
     codeToAst
 }
