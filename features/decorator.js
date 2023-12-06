@@ -1,60 +1,40 @@
 import {BasicFeature} from './basicFeature.js'
 import luaparser from './leapparse.js';
 
-import {markLoc, codeToAst} from "../functions/utils.js";
+
+import {markLoc, codeToAst, formatAst} from "../functions/utils.js";
+import AstToCode from '../functions/astToCode.js';
+
 import {walk as walker} from 'estree-walker';
+
 
 var ast = luaparser.ast
 var decorators = []
-var metatable = codeToAst(`
-    setmetatable({name = "FUNCTION_NAME"}, {
-        __call = function(self, ...) return _FUNCTION_NAME(...) end
-    })
+
+var decorator = codeToAst(`
+    FUNCTION_NAME = DECORATOR(
+        setmetatable({name = "FUNCTION_NAME"}, {
+            __call = function(self, ...) return ORIGINAL_FUNCTION(...) end
+        })
+    )
 `)
 
-function convertDecorator(func, decorator, metatable) {
-    let functionName = markLoc(ast.identifier(func.identifier.name), func.loc)
+function saveOriginalFunction(node) {
+    // Save the function as _function
+    let originalFunction = ast.identifier("_"+node.identifier.name)
+    originalFunction = markLoc(originalFunction, node.loc)
 
-    // Functions arguments
-    let variables = [
-        metatable,
-        ...decorator.arguments // Arguments used directly in the decorator call
-    ]
+    // Save the original function as: local _function = function
+    var originalFunctionLocal = ast.localStatement([originalFunction], [node.identifier])
+    originalFunctionLocal = markLoc(originalFunctionLocal, node.loc)
 
-    // We need to create the function "manually" without using the declareAstFunction function why the base can be also MemberExpression etc, not only an Identifier
-    var decoratorCallExp = ast.callExpression(
-        markLoc(decorator.base, func.loc),
-        variables
-    )
-    // Preserve the location
-    decoratorCallExp = markLoc(decoratorCallExp, func.loc) // Preserve the location
-    
-    var decoratorCallStatement = ast.callStatement(decoratorCallExp)
-    decoratorCallStatement = markLoc(decoratorCallStatement, func.loc) // Preserve the location
-    
-    // Create the assignment node
-    let decoratorNode = ast.assignmentStatement([functionName], [decoratorCallStatement])
-    decoratorNode = markLoc(decoratorNode, func.loc)
-
-    return decoratorNode
+    return originalFunctionLocal
 }
 
-function prepareMetatable(node) {
-    walker(metatable, {
-        enter(_node, parent, prop, index) {
-            _node = markLoc(_node, node.loc)
-
-            if (_node.name?.search("FUNCTION_NAME") > -1) {
-                _node.name = _node.name.replace("FUNCTION_NAME", node.identifier.name)
-            }
-            
-            if (_node.raw?.search("FUNCTION_NAME") > -1) {
-                _node.raw = _node.raw.replace("FUNCTION_NAME", node.identifier.name)
-            }
-
-            this.replace(_node)
-        }
-    })
+function processDecorator(decorator) {
+    var astToCode = new AstToCode(false);
+    
+    return astToCode.processAst(decorator)
 }
 
 class Decorator extends BasicFeature {
@@ -73,18 +53,31 @@ class Decorator extends BasicFeature {
                 if (decorators.length > 0) {
                     let nodes = []
 
-                    let savedFunction = ast.localStatement([markLoc(ast.identifier("_"+node.identifier.name), node.loc)], [node.identifier])
-                    savedFunction = markLoc(savedFunction, node.loc)
+                    // Add the original function to the nodes
+                    var originalFunctionLocal = saveOriginalFunction(node)
+                    nodes.push(originalFunctionLocal)
 
-                    nodes.push(savedFunction)
-                    prepareMetatable(node)
-                    
-                    for (let decorator of decorators) {
-                        let decoratorNode = convertDecorator(node, decorator, metatable)
+                    for (let _decorator of decorators) {
+                        let processedDecorator = processDecorator(_decorator.base) // Get the code parsed ast
+
+                        let decoratorNode = formatAst(decorator, {
+                            name: {
+                                ORIGINAL_FUNCTION: "_"+node.identifier.name,
+                                FUNCTION_NAME: node.identifier.name,
+                                DECORATOR: processedDecorator
+                            },
+                            raw: {
+                                FUNCTION_NAME: node.identifier.name
+                            }
+                        }, node.loc)
+
+                        // Inject the decorator arguments
+                        decoratorNode.init[0].arguments.push(..._decorator.arguments)
+
                         nodes.push(decoratorNode)
                     }
               
-                    // Insert the new nodes after the current node (function declaration)
+                    // Insert the new nodes after the current node (the actual function declaration)
                     parent[prop].splice(index+1, 0, ...nodes)
 
                     decorators = []
