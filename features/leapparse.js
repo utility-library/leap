@@ -816,6 +816,11 @@ let _exports = {}
       skipWhiteSpace();
       break
     }
+
+    // Refresh the charCode after the comment
+    charCode = input.charCodeAt(index)
+    next = input.charCodeAt(index + 1)
+
     if (index >= length) return {
         type : EOF
       , value: '<eof>'

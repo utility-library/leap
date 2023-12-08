@@ -23,7 +23,7 @@ let features = [new Class(), new TypeChecking(), new Decorator(), new DefaultVal
 
 async function PreprocessFile(filePath) {
     let file = fs.readFileSync(filePath, "utf8");
-    var ast = luaparse.parse(file, {locations: true, luaVersion: "5.4"});
+    var ast = luaparse.parse(file, {locations: true, luaVersion: "5.4", comments: false});
 
     var featuresUsed = {}
     // Edit ast according to features

@@ -35,7 +35,9 @@ function markAstLoc(ast, loc) {
 }
 
 function formatAst(ast, replace, loc) {
-    walk(ast, {
+    let cloned = structuredClone(ast)
+
+    walk(cloned, {
         enter(node) {
             // Replace every node occurence
             for (const [nodeKey, toReplace] of Object.entries(replace)) {
@@ -58,7 +60,7 @@ function formatAst(ast, replace, loc) {
         }
     })
 
-    return structuredClone(ast)
+    return cloned
 }
 
 function codeToAst(code) {
