@@ -7,13 +7,18 @@ Think of it as an effective "modernity" leap into the future to make lua a featu
 ## TODO
   - [ ] Distribuite leap as a npm for pre processing files (??)
   - [ ] Adding exports for preprocessing from another resource inside FiveM
-  - [ ] Implementing shadow writing and auto resource parsing 
+  - [X] Implementing shadow writing and auto resource parsing 
 
 ## Parsing suppport
-  - [x] Leap parser (based on https://github.com/fstirlitz/luaparse)
-  - [x] Custom AST to code that maintain line formatting (not indentation for now)
-  - [x] Hooking capability for adding inline hooks (without touching the line formattation) 
-  - [x] Hooking capability for adding inline hooks (without touching the line formattation) 
+  - [X] Leap parser (based on https://github.com/fstirlitz/luaparse)
+  - [X] Custom AST to code that maintain line formatting (not indentation for now)
+  - [X] Hooking capability for adding inline hooks (without touching the line formattation) 
+  - [X] Hooking capability for adding inline hooks (without touching the line formattation) 
+
+## Leap v2 new features
+  - [X] In operator
+  - [X] Table comprehension
+  - [X] leap.deserialize (to deserialize classes)
 
 ## Leap v1 added features
   - [X] Arrow functions
