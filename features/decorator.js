@@ -44,7 +44,6 @@ class Decorator extends BasicFeature {
     edit(node, parent, prop, index) {
         switch(node.type) {
             case "DecoratorStatement":
-                console.log("Add this node to decorators")
                 decorators.push(node)
                 this.remove()
                 break

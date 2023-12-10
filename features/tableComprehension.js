@@ -1,3 +1,5 @@
+import structuredClone from "@ungap/structured-clone"
+
 import {BasicFeature} from './basicFeature.js'
 import luaparser from './leapparse.js';
 import { codeToAst, formatAst, markAstLoc, markLoc } from '../functions/utils.js';

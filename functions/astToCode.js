@@ -119,7 +119,14 @@ class AstToCode {
     switchExpressions(node) {
         switch (node.type) {
             case "MemberExpression":
-                this.processNode(node.base)
+                if (node.indexer == ":" && (node.base.type == "StringLiteral" || node.base.type == "NumericLiteral")) {
+                    this.code += "("
+                    this.processNode(node.base)
+                    this.code += ")"
+                } else {
+                    this.processNode(node.base)
+                }
+                
                 this.code += `${node.indexer}`;
                 this.processNode(node.identifier)
                 
@@ -221,7 +228,7 @@ class AstToCode {
 
             case 'LocalStatement':
                 this.code += " local "
-                this.processNodes(node.variables)
+                this.processNodes(node.variables, ", ")
 
                 this.code += " = ";
                 node.init.forEach(node => this.processNode(node))
@@ -347,7 +354,7 @@ class AstToCode {
 
             case "ReturnStatement":
                 this.code += " return "
-                this.processNodes(node.arguments)
+                this.processNodes(node.arguments, ", ")
                 this.code += ";"
                 return true
 
@@ -377,9 +384,9 @@ class AstToCode {
 
             case "ForGenericStatement":
                 this.code += " for "
-                this.processNodes(node.variables, ",")
+                this.processNodes(node.variables, ", ")
                 this.code += " in "
-                this.processNodes(node.iterators)
+                this.processNodes(node.iterators, ", ")
                 this.code += " do "
                 this.processNodes(node.body);
 

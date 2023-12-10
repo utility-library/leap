@@ -814,12 +814,11 @@ let _exports = {}
     while ((45 === charCode && 45 === next) || (47 === charCode && 42 === next)) {
       scanComment();
       skipWhiteSpace();
-      break
-    }
 
-    // Refresh the charCode after the comment
-    charCode = input.charCodeAt(index)
-    next = input.charCodeAt(index + 1)
+      // Refresh the charCode after the comment
+      charCode = input.charCodeAt(index)
+      next = input.charCodeAt(index + 1)
+    }
 
     if (index >= length) return {
         type : EOF
