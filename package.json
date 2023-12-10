@@ -1,17 +1,37 @@
 {
-  "name": "leap",
+  "name": "leapparser",
   "version": "2.0.0",
-  "description": "",
+  "description": "Pre-processor of a \"modernized\" and extended version of lua that pre-processes in pure executable lua. Mainly intended for FiveM",
+  "keywords": [
+    "leap",
+    "fivem",
+    "lua",
+    "preprocessor",
+    "fivem-preprocessor"
+  ],
   "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "main": "functions/api.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/utility-library/leap/tree/parser"
   },
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "start": "node functions/api.js",
+    "build": "esbuild functions/api.js --bundle --platform=node --outfile=functions/api.cjs"
+  },
+  "exports": {
+    "import": "./functions/api.js",
+    "require": "./functions/api.cjs"
+  },
+  "author": "XenoS (https://github.com/XenoS-ITA)",
+  "license": "MIT",
   "dependencies": {
+    "@ungap/structured-clone": "^1.2.0",
     "estree-walker": "^3.0.3",
+    "glob": "^10.3.10",
     "luamin": "^1.0.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.8"
   }
 }

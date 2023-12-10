@@ -1,7 +1,10 @@
 import { walk } from "estree-walker";
 import luaparse from "../features/leapparse.js"
-
 import luamin from "luamin";
+import structuredClone from "@ungap/structured-clone";
+
+import { GetHooks } from "./hooking.js";
+
 var ast = luaparse.ast
 
 
@@ -72,10 +75,43 @@ function codeToAst(code) {
     return ast
 }
 
+function applyFeaturesToAst(ast, features) {
+    var featuresFound = {}
+
+    walk(ast, {
+        enter(node, parent, prop, index) {
+            for (let feature of features) {
+                if (feature.shouldEdit.call(this, node, parent)) {
+                    featuresFound[feature.constructor.name] = true
+                    
+                    feature.edit.call(this, node, parent, prop, index)
+                }
+            }
+        },
+    })
+
+    return featuresFound
+}
+
+function injectHooks(ast, featuresFound) {
+    var hooks = GetHooks()
+    for (let featureName in featuresFound) {
+        if (!hooks[featureName]) {
+            continue
+        }
+
+        hooks[featureName].map((contentAst) => {
+            ast.body.unshift(...contentAst.body)
+        })
+    }
+}
+
 export {
     declareAstFunction,
     markLoc,
     markAstLoc,
     formatAst,
-    codeToAst
+    codeToAst,
+    applyFeaturesToAst,
+    injectHooks
 }
