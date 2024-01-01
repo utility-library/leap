@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "glob": "^10.3.10",
+    "winlink": "^1.0.2"
+  }
+}
