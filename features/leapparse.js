@@ -3044,8 +3044,6 @@ let _exports = {}
           var expression = parseExpression(flowContext);
 
           if (null != expression) {
-            console.log(expression)
-
             expressions.push(expression);
 
             while (consume(',')) {
@@ -3056,7 +3054,6 @@ let _exports = {}
             }
           }
 
-          console.log(token)
           expect(')');
           return finishNode(ast.callExpression(base, expressions));
 

@@ -4410,11 +4410,13 @@ function parseCallExpression(base, flowContext) {
             raise(null, errors.ambiguousSyntax, token.value);
         }
         next();
+        consume("new");
         var expressions = [];
         var expression = parseExpression(flowContext);
         if (null != expression) {
           expressions.push(expression);
           while (consume(",")) {
+            consume("new");
             expression = parseExpectedExpression(flowContext);
             expressions.push(expression);
           }
@@ -5443,8 +5445,10 @@ var AstToCode = class {
       case "LocalStatement":
         this.code += " local ";
         this.processNodes(node.variables, ", ");
-        this.code += " = ";
-        node.init.forEach((node2) => this.processNode(node2));
+        if (node.init.length > 0) {
+          this.code += " = ";
+          node.init.forEach((node2) => this.processNode(node2));
+        }
         this.code += ";";
         return true;
       case "ClassStatement":
@@ -5454,8 +5458,10 @@ var AstToCode = class {
         return true;
       case "AssignmentStatement":
         this.processNodes(node.variables, ", ");
-        this.code += ` = `;
-        this.processNodes(node.init, ", ");
+        if (node.init.length > 0) {
+          this.code += ` = `;
+          this.processNodes(node.init, ", ");
+        }
         this.code += ";";
         return true;
       case "ArrowFunctionStatement":
