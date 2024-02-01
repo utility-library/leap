@@ -17,12 +17,17 @@
   },
   "scripts": {
     "start": "node functions/api.js",
-    "build": "esbuild functions/api.js --bundle --platform=node --outfile=functions/api.cjs"
+    "build": "esbuild functions/api.js --bundle --platform=node --outfile=functions/api.cjs",
+    "test": "node index.js"
   },
   "exports": {
     "import": "./functions/api.js",
     "require": "./functions/api.cjs"
   },
+  "files": [
+    "features/**",
+    "functions/**"
+  ],
   "author": "XenoS (https://github.com/XenoS-ITA)",
   "license": "MIT",
   "dependencies": {
