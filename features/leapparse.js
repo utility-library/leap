@@ -2430,7 +2430,7 @@ let _exports = {}
         lvalue = true;
       } else if ('(' === token.value) {
         next();
-
+        
         if (Identifier === token.type) {
           name = token.value;
           base = parseIdentifier();
@@ -3037,18 +3037,26 @@ let _exports = {}
               raise(null, errors.ambiguousSyntax, token.value);
           }
           next();
+          consume("new");
 
           // List of expressions
           var expressions = [];
           var expression = parseExpression(flowContext);
+
           if (null != expression) {
+            console.log(expression)
+
             expressions.push(expression);
+
             while (consume(',')) {
+              consume("new"); // If present skip new keyword
+
               expression = parseExpectedExpression(flowContext);
               expressions.push(expression);
             }
           }
 
+          console.log(token)
           expect(')');
           return finishNode(ast.callExpression(base, expressions));
 
