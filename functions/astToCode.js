@@ -230,9 +230,12 @@ class AstToCode {
                 this.code += " local "
                 this.processNodes(node.variables, ", ")
 
-                this.code += " = ";
-                node.init.forEach(node => this.processNode(node))
+                if (node.init.length > 0) {
+                    this.code += " = ";
+                    node.init.forEach(node => this.processNode(node))
+                }
                 this.code += ";"
+                
                 return true
 
             case "ClassStatement":
@@ -243,8 +246,10 @@ class AstToCode {
 
             case "AssignmentStatement":
                 this.processNodes(node.variables, ", ");
-                this.code += ` = `;
-                this.processNodes(node.init, ', ');
+                if (node.init.length > 0) {
+                    this.code += ` = `;
+                    this.processNodes(node.init, ', ');
+                }
                 this.code += ";";
 
                 return true
