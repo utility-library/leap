@@ -1501,6 +1501,8 @@ let _exports = {}
     previousToken = token;
     token = lookahead;
     lookahead = lex();
+
+    consume("new");
   }
 
   // Consume a token if its value matches. Once consumed or not, return the
@@ -2335,7 +2337,6 @@ let _exports = {}
 
       if (consume('=')) {
         do {
-          consume("new") // If token is "new" skip it to the next one (the actual expression)
           var expression = parseExpectedExpression(flowContext);
           init.push(expression);
         } while (consume(','));
@@ -2518,7 +2519,6 @@ let _exports = {}
       var values = [];
 
       do {
-        consume("new") // If token is "new" skip it to the next one (the actual expression)
         var unpack;
         
         if (token.type == VarargLiteral) {
@@ -3037,7 +3037,6 @@ let _exports = {}
               raise(null, errors.ambiguousSyntax, token.value);
           }
           next();
-          consume("new");
 
           // List of expressions
           var expressions = [];
@@ -3047,7 +3046,6 @@ let _exports = {}
             expressions.push(expression);
 
             while (consume(',')) {
-              consume("new"); // If present skip new keyword
 
               expression = parseExpectedExpression(flowContext);
               expressions.push(expression);

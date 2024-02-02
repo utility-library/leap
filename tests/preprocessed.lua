@@ -1,16 +1,7 @@
- local tab = {test = 5,test2 = 10};
+classBuilder = ( function (a, b, c) b.__type = a; if (not c) then error(("ExtendingNotDefined: " .. (a .. " tried to extend a class that is not defined")), 2) end; if c.__prototype then b.super = setmetatable({}, {__index = ( function (self, d)  return c.__prototype[d]; end),__call = ( function (self, ...)  return c(...); end)}); end;_G[a] = setmetatable({__type = a,__prototype = b}, {__index = ( function (self, d)  if self.__prototype.super then  return (self.__prototype[d] or self.__prototype.super[d]); else  return self.__prototype[d]; end; end),__newindex = ( function (self, e, f)  if (e:sub(1, 2) == "__") then rawset(self, e, f) else error(("attempt to assign class property '" .. (e .. "' directly, please instantiate the class before assigning any properties")), 2) end; end),__call = ( function (self, ...)  local g = setmetatable({__type = self.__type}, {__index = ( function (h, d)  if self.__prototype.super then  return (self.__prototype[d] or self.__prototype.super[d]); else  return self.__prototype[d]; end; end),__gc = ( function (h)  if h.destructor then h:destructor() end; end)}); if (not self.__skipNextConstructor) then  if g.constructor then g:constructor(...) end; else self.__skipNextConstructor = nil; end; return g; end)}); end); if (not leap) then leap = {}; end;leap.deserialize = ( function (i)  if ((type(i) == "table") and i.__type) then  local j = _G[i.__type]; if j then j.__skipNextConstructor = true; local g = j(); for e, f in pairs(i) do g[e] = f; end; return g; else error(("Class '" .. (i.__type .. "' not found")), 2) end; end; end); if (not _type) then _type = type;type = ( function (k)  local l = _type(k); if ((l == "table") and k.__type) then  return k.__type; else  return l; end; end); end;classBuilder("Test", {
+constructor = ( function (self) 
+print("Test")
+ end)
 
 
- local a = ( function ()  local a = {}; for k,v in pairs(tab) do a[k] = (v * 2); end; return a; end)();
-
-
- local b = ( function ()  local a = {}; for k,v in pairs(tab) do table.insert(a, ("element:" .. k)) end; return a; end)();
-
-
- for k,v in pairs(a) do 
-print(k, v)
- end;
-
- for k,v in pairs(b) do 
-print(k, v)
- end;
+}, {})Test()
