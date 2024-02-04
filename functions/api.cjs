@@ -3255,6 +3255,7 @@ function next() {
   previousToken = token;
   token = lookahead;
   lookahead = lex();
+  consume("new");
 }
 function consume(value) {
   if (value === token.value) {
@@ -3876,7 +3877,6 @@ function parseLocalStatement(flowContext) {
     } while (consume(","));
     if (consume("=")) {
       do {
-        consume("new");
         var expression = parseExpectedExpression(flowContext);
         init.push(expression);
       } while (consume(","));
@@ -4014,7 +4014,6 @@ function parseAssignmentOrCallStatementOrArrowFunction(flowContext) {
     expect("=");
     var values = [];
     do {
-      consume("new");
       var unpack;
       if (token.type == VarargLiteral) {
         consume(token.value);
@@ -4410,13 +4409,11 @@ function parseCallExpression(base, flowContext) {
             raise(null, errors.ambiguousSyntax, token.value);
         }
         next();
-        consume("new");
         var expressions = [];
         var expression = parseExpression(flowContext);
         if (null != expression) {
           expressions.push(expression);
           while (consume(",")) {
-            consume("new");
             expression = parseExpectedExpression(flowContext);
             expressions.push(expression);
           }
