@@ -144,7 +144,7 @@ class PreProcessor {
         const destDir = path.join(tmpDir, "leap", this.resourceName)
         const resourcePath = GetResourcePath(this.resourceName)
 
-        let files = glob.sync("*.lua", {cwd: resourcePath, absolute: true, windowsPathsNoEscape: true})
+        let files = glob.sync("**/*.lua", {cwd: resourcePath, absolute: true, windowsPathsNoEscape: true})
 
         for (let filePath of files) {
             let relativePath = getResourceFileRelativePath(filePath, this.resourceName)
