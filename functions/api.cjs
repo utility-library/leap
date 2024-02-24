@@ -3679,9 +3679,24 @@ function parseGotoStatement(flowContext) {
 }
 function parseDecoratorStatement(flowContext) {
   token.value = token.value.substring(1);
-  let call = parseAssignmentOrCallStatementOrArrowFunction(flowContext);
-  let expressionBase = call.expression.base;
-  return finishNode(ast.decoratorStatement(expressionBase, call.expression.arguments));
+  var base = parseFunctionName();
+  var expressions = [];
+  if (!features.emptyStatement) {
+    if (token.line !== previousToken.line)
+      raise(null, errors.ambiguousSyntax, token.value);
+  }
+  if (consume("(")) {
+    var expression = parseExpression(flowContext);
+    if (null != expression) {
+      expressions.push(expression);
+      while (consume(",")) {
+        expression = parseExpectedExpression(flowContext);
+        expressions.push(expression);
+      }
+    }
+    expect(")");
+  }
+  return finishNode(ast.decoratorStatement(base, expressions));
 }
 function parseDoStatement(flowContext) {
   if (options.scope)

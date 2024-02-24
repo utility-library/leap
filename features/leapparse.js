@@ -2061,11 +2061,33 @@ let _exports = {}
 
   function parseDecoratorStatement(flowContext) {
     token.value = token.value.substring(1) // remove the @ (decorator keyword)
-
-    let call = parseAssignmentOrCallStatementOrArrowFunction(flowContext) // just parse it as a call statement (yeah pretty tricky but works pretty well)
-    let expressionBase = call.expression.base
-
-    return finishNode(ast.decoratorStatement(expressionBase, call.expression.arguments));
+    
+    var base = parseFunctionName();
+    var expressions = [];
+  
+    // Parse arguments (custom implementation of parseCallExpression as we dont require a open parenthesis, no args = no parentheses)
+      if (!features.emptyStatement) {
+        if (token.line !== previousToken.line)
+          raise(null, errors.ambiguousSyntax, token.value);
+      }
+  
+      if (consume("(")) {
+        // List of expressions
+        var expression = parseExpression(flowContext);
+    
+        if (null != expression) {
+          expressions.push(expression);
+    
+          while (consume(',')) {
+            expression = parseExpectedExpression(flowContext);
+            expressions.push(expression);
+          }
+        }
+  
+        expect(')');
+      }
+  
+    return finishNode(ast.decoratorStatement(base, expressions));
   }
 
   //     do ::= 'do' block 'end'
