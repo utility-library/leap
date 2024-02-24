@@ -1,71 +1,67 @@
-const { exec } = require("child_process")
+//#region Imports
+const { execSync } = require("child_process")
 
 const util = require("util")
 const setImmediatePromise = util.promisify(setImmediate);
 
 const {AddExclusion, RemoveExclusion} = require("./functions/vscode")
 const {PreProcessor} = require("./functions/preprocessResource")
+//#endregion
 
-let vscodeInstalled = false
+//#region Variables
+const vscodeInstalled = (() => {
+    try {
+        execSync("code --version");
+        return true;
+    } catch {
+        return false;
+    }
+})()
+
 let leapBusy = {
     status: false,
     resource: ""
 }
 let lastBuild = {}
 let buildQueue = {}
+//#endregion
 
-exec("code --version", 
-    function (error, stdout, stderr) {
-        if (stdout) { // if we dont get an error (unrecognized command etc.)
-            vscodeInstalled = true
+//#region Main Loop (handling buildQueue)
+setTick(async () => {
+    for (let resource in buildQueue) {
+        await setImmediatePromise()
+
+        let cb = buildQueue[resource]
+        // Add vscode exclusion
+        let resourcePath = GetResourcePath(resource)
+        let preprocessor = new PreProcessor(resource)
+
+        if (vscodeInstalled) {
+            AddExclusion(resourcePath)
         }
-    }
-)
 
-async function mainLoop() {
-    while (true) {
-        for (let resource in buildQueue) {
-            const start = Date.now()
-            await setImmediatePromise()
-
-            let cb = buildQueue[resource]
-            // Add vscode exclusion
-            let resourcePath = GetResourcePath(resource)
-            let preprocessor = new PreProcessor(resource)
+        // Preprocess (Shadow writing)
+        try {
             preprocessor.createTempBackup()
-    
-            if (vscodeInstalled) {
-                AddExclusion(resourcePath)
-            }
-    
-            // Preprocess (Shadow writing)
-            try {
-                await preprocessor.run()
-                await preprocessor.write()
-        
-                preprocessor.writeOriginal()
-                cb(true)
-            } catch(error) {
-                cb(false, "^1" + error.message + "^0")
-            }
-            
-            // Remove vscode exclusion
-            if (vscodeInstalled) {
-                RemoveExclusion(resourcePath)
-            }
 
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await preprocessor.run()
+            await preprocessor.write()
+    
+            preprocessor.writeOriginal()
+            cb(true)
+        } catch(error) {
+            cb(false, "^1" + error.message + "^0")
         }
-
-        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Remove vscode exclusion
+        if (vscodeInstalled) {
+            RemoveExclusion(resourcePath)
+        }
     }
-};
-
-setImmediate(function () {
-    mainLoop()
 })
+//#endregion
 
-// Register the build task
+//#region Build Task
 let leapBuildTask = {
     shouldBuild(res) {
         if (lastBuild[res]) {
@@ -112,51 +108,15 @@ let leapBuildTask = {
                     resolve()
                 }
             }))
-
-            /*
-            // Set leap busy
-            leapBusy.status = true
-            leapBusy.resource = res
-
-            // Add vscode exclusion
-            let resourcePath = GetResourcePath(res)
-            let preprocessor = new PreProcessor(res)
-            preprocessor.createTempBackup()
-
-            if (vscodeInstalled) {
-                AddExclusion(resourcePath)
-            }
-
-            // Preprocess (Shadow writing)
-            try {
-                await preprocessor.run()
-                await preprocessor.write()
-
-                lastBuild[res] = Date.now()
-
-                preprocessor.writeOriginal()
-                cb(true)
-            } catch(error) {
-                cb(false, "^1" + error.message + "^0")
-            }
-            
-            // Remove vscode exclusion
-            if (vscodeInstalled) {
-                RemoveExclusion(resourcePath)
-            }
-
-            // Reset leap busy
-            leapBusy.status = false
-            leapBusy.resource = undefined
-            */
         }
 
         buildleap().then()
     }
 }
 RegisterResourceBuildTaskFactory("leap", () => leapBuildTask)
+//#endregion
 
-// Register the command
+//#region Command
 RegisterCommand("leap", async (source, args) => {
     if (source != 0) return // only server side can use the command
 
@@ -194,3 +154,4 @@ RegisterCommand("leap", async (source, args) => {
     }
 
 }, true)
+//#endregion
