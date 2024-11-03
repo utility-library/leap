@@ -1,21 +1,31 @@
 //#region Imports
 const {PreProcessor} = require("./functions/preprocessResource")
-const {resourceNeedPreprocessing} = require("./functions/utils")
+const {isLeapDependency, hasAnyFileBeenModified} = require("./functions/utils")
 //#endregion
+
+let flag = true
 
 //#region Build Task
 let leapBuildTask = {
     shouldBuild(res) {
-        // Check if the resource has dependency
-        return resourceNeedPreprocessing(res)
+        return isLeapDependency(res) && hasAnyFileBeenModified(res)
     },
     build(res, cb) {
         // We need to use this trick as the build function cant be directly async
         let buildleap = async () => {
-            const preprocessor = new PreProcessor(res)
-            await preprocessor.run()
-            await preprocessor.setPathsAsBuildRelative()
-            cb(true)
+            try {
+                const preprocessor = new PreProcessor(res)
+                try {
+                    await preprocessor.run()
+                    await preprocessor.setPathsAsBuildRelative()
+                    await preprocessor.writeCache()
+                } catch (e) {
+                    cb(false, e.message)
+                }
+                cb(true)
+            } catch (e) {
+                cb(false, e.message)
+            }
         }
 
         buildleap().then()

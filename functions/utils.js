@@ -14,7 +14,7 @@ function canFileBePreprocessed(filePath) {
     }
 }
 
-function resourceNeedPreprocessing(res) {
+function isLeapDependency(res) {
     const nDependency = GetNumResourceMetadata(res, 'dependency');
 
     if (nDependency > 0) {
@@ -30,7 +30,67 @@ function resourceNeedPreprocessing(res) {
     return false;
 }
 
+function loadCache(resourceName) {
+    let file = "[]"
+
+    try {
+        file = fs.readFileSync("cache/leap/" + resourceName + ".json", "utf-8")
+    } catch (e) {}
+
+    return JSON.parse(file)
+}
+
+function hasCachedFileBeenModified(file, resourceName) {
+    const filePath = relativeToAbs(file.path, resourceName)
+
+    if (!fs.existsSync(filePath)) {
+        return true
+    }
+
+    const stats = fs.statSync(filePath)
+
+    if (stats.mtimeMs != file.mtime || stats.size != file.size || stats.ino != file.inode) {
+        return true
+    }
+}
+
+function hasAnyFileBeenModified(resourceName) {
+    const cache = loadCache(resourceName)
+
+    // No cache found
+    if (cache.length == 0) {
+        return true
+    }
+
+    for (let file of cache) {
+        if (hasCachedFileBeenModified(file, resourceName)) {
+            return true
+        }
+    }
+
+    return false
+}
+
+function absToRelative(filePath, resourceName) {
+    let resourcePath = GetResourcePath(resourceName)
+    resourcePath = resourcePath.replace(/(\/\/|\/)/g, "\\")
+
+    return filePath.replace(resourcePath, "")
+}
+
+function relativeToAbs(filePath, resourceName) {
+    let resourcePath = GetResourcePath(resourceName)
+    resourcePath = resourcePath.replace(/(\/\/|\/)/g, "\\")
+
+    return path.join(resourcePath, filePath)
+}
+
 module.exports = {
     canFileBePreprocessed,
-    resourceNeedPreprocessing
+    absToRelative,
+    relativeToAbs,
+    isLeapDependency,
+    loadCache,
+    hasCachedFileBeenModified,
+    hasAnyFileBeenModified
 }

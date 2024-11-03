@@ -2,7 +2,7 @@ const fs = require("fs")
 const path = require("path");
 
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
-const {canFileBePreprocessed} = require("./utils")
+const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified} = require("./utils")
 const {preprocessCode} = require("./leap");
 
 const replaceLast = (str, pattern, replacement) => {
@@ -39,8 +39,29 @@ class PreProcessor {
         return files
     }
 
+    getFilesToBuild() {
+        const files = this.getFiles()
+        const cache = loadCache(this.resourceName)
+        const filesToBuild = []
+
+        files.map(file => {
+            const cachedFile = cache.find(cacheFile => cacheFile.path == absToRelative(file, this.resourceName))
+
+            if (!cachedFile) {
+                filesToBuild.push(file)
+                return
+            }
+
+            if (hasCachedFileBeenModified(cachedFile, this.resourceName)) {
+                filesToBuild.push(file)
+            }
+        })
+
+        return filesToBuild
+    }
+
     async run() {
-        let files = this.getFiles()
+        let files = this.getFilesToBuild()
         
         if (files.length == 0) {
             throw new Error(`No files provided by the resource (probably a typo), check the manifest of ${this.resourceName}`)
@@ -64,9 +85,16 @@ class PreProcessor {
                         fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
                         fs.writeFileSync(filePathBuild, preprocessed)
 
-                        console.log("Preprocessed " + filePath)
                         resolve()
                     } catch (e) {
+                        if (e.errors) {
+                            for (let error of e.errors) {
+                                const relpath = absToRelative(filePath, this.resourceName)
+                                console.log(`^1Error parsing script @${this.resourceName}${relpath}:${error.line}: ${error.message}`)
+                            }
+                        } else {
+                            console.error(e.message)
+                        }
                         reject(e)
                     }
                 })
@@ -104,7 +132,7 @@ class PreProcessor {
         ) && (
             line.includes(".lua") || line.includes(".*") // Its a lua/any file
         ) && (
-            !line.includes(ignoredFiles) // Skip building ignored files
+            ignoredFiles.length == 0 || !line.includes(ignoredFiles) // Skip building ignored files
         )
     }
 
@@ -119,25 +147,69 @@ class PreProcessor {
             let newLines = []
 
             const ignored = GetIgnoredFiles(this.resourceName)
+            let check = false
+            let singleFile = false
 
             for (let line of lines) {
-                if (this.lineNeedToBeBuildRelative(line, ignored)) {
-                    line = line.replace(/(["'])/, "$1build/")
-                    somethingChanged = true
+                if (!check) {
+                    // Start multiple files
+                    if (line.startsWith("client_scripts") || line.startsWith("server_scripts") || line.startsWith("shared_scripts") || line.startsWith("escrow_ignore")) {
+                        check = true
+
+                    // Start single file, dont skip
+                    } else if (line.startsWith("client_script") || line.startsWith("server_script") || line.startsWith("shared_script")) {
+                        check = true
+                        singleFile = true
+                    }
+                } else {
+                    // End of multi file
+                    if (line.startsWith("}")) {
+                        check = false
+                    }
+                }
+
+                if (check) {
+                    //console.log(line, this.lineNeedToBeBuildRelative(line, ignored))
+                    if (this.lineNeedToBeBuildRelative(line, ignored)) {
+                        line = line.replace(/(["'])/, "$1build/")
+                        somethingChanged = true
+                    }
+
+                    // Single file, reset check
+                    if (singleFile) {
+                        singleFile = false
+                        check = false
+                    }
                 }
 
                 newLines.push(line)
             }
 
+            fs.writeFileSync(fxmanifest, newLines.join("\n"))
+
             if (somethingChanged) {
                 ExecuteCommand("refresh")
-
-                // Wait 1s for the resource to be refreshed (should be enough)
                 await new Promise((resolve, reject) => setTimeout(() => resolve(), 1000))
             }
-
-            fs.writeFileSync(fxmanifest, newLines.join("\n"))
         }
+    }
+
+    async writeCache() {
+        let cache = []
+
+        for (let filePath of this.getFiles()) {
+            const stats = fs.statSync(filePath)
+
+            cache.push({
+                path: absToRelative(filePath, this.resourceName),
+                mtime: stats.mtimeMs,
+                size: stats.size,
+                inode: stats.ino
+            })
+        }
+
+        fs.mkdirSync("cache/leap/", {recursive: true})
+        fs.writeFileSync("cache/leap/" + this.resourceName + ".json", JSON.stringify(cache))
     }
 }
 
