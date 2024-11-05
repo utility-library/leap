@@ -55,7 +55,7 @@ RegisterCommand("leap", async (source, args) => {
 
     switch(type) {
         case "build": {
-            await preprocessor.run()
+            await preprocessor.run(true)
             await preprocessor.setPathsAsBuildRelative()
             console.log(`^2Builded ${resourceName} successfully^0`)
 
@@ -66,6 +66,7 @@ RegisterCommand("leap", async (source, args) => {
 
             await preprocessor.run()
             await preprocessor.setPathsAsBuildRelative()
+            await preprocessor.writeCache()
 
             StartResource(resourceName)
             break;

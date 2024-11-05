@@ -60,8 +60,8 @@ class PreProcessor {
         return filesToBuild
     }
 
-    async run() {
-        let files = this.getFilesToBuild()
+    async run(ignoreCache) {
+        let files = ignoreCache ? this.getFiles() : this.getFilesToBuild()
         
         if (files.length == 0) {
             throw new Error(`No files provided by the resource (probably a typo), check the manifest of ${this.resourceName}`)
