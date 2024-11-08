@@ -132,7 +132,7 @@ class PreProcessor {
         ) && (
             line.includes(".lua") || line.includes(".*") // Its a lua/any file
         ) && (
-            ignoredFiles.length == 0 || !line.includes(ignoredFiles) // Skip building ignored files
+            ignoredFiles.length == 0 || !ignoredFiles.some(file => line.includes(file)) // Skip building ignored files
         )
     }
 
@@ -169,7 +169,7 @@ class PreProcessor {
                 }
 
                 if (check) {
-                    //console.log(line, this.lineNeedToBeBuildRelative(line, ignored))
+                    //console.log(line, ignored, ignored.some(file => line.includes(file)))
                     if (this.lineNeedToBeBuildRelative(line, ignored)) {
                         line = line.replace(/(["'])/, "$1build/")
                         somethingChanged = true
