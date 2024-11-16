@@ -1,4 +1,22 @@
 const fs = require("fs")
+const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
+
+function getResourceProcessableFiles(resourceName) {
+    let resourcePath = GetResourcePath(resourceName)
+    let files = GetAllScripts(resourceName)
+    let ignoredFiles = GetIgnoredFiles(resourceName)
+    
+    ignoredFiles = ignoredFiles.map(file => ResolveFile(resourcePath, file))
+    ignoredFiles = ignoredFiles.flat()
+
+    files = files.map(file => ResolveFile(resourcePath, file))
+    files = files.flat()
+
+    // Remove ignored files
+    files = files.filter(file => !ignoredFiles.includes(file))
+
+    return files
+}
 
 function canFileBePreprocessed(filePath) {
     try {
@@ -55,10 +73,15 @@ function hasCachedFileBeenModified(file, resourceName) {
 }
 
 function hasAnyFileBeenModified(resourceName) {
+    const files = getResourceProcessableFiles(resourceName)
     const cache = loadCache(resourceName)
 
     // No cache found
     if (cache.length == 0) {
+        return true
+    }
+
+    if (cache.length < files.length) {
         return true
     }
 
@@ -92,5 +115,6 @@ module.exports = {
     isLeapDependency,
     loadCache,
     hasCachedFileBeenModified,
-    hasAnyFileBeenModified
+    hasAnyFileBeenModified,
+    getResourceProcessableFiles
 }

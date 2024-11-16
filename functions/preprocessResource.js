@@ -2,7 +2,7 @@ const fs = require("fs")
 const path = require("path");
 
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
-const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified} = require("./utils")
+const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles} = require("./utils")
 const {preprocessCode} = require("./leap");
 
 const replaceLast = (str, pattern, replacement) => {
@@ -24,23 +24,8 @@ class PreProcessor {
         this.verbose = GetConvar("leap_verbose", "false") == "true"
     }
 
-    getFiles() {
-        let resourcePath = GetResourcePath(this.resourceName)
-        let files = GetAllScripts(this.resourceName)
-        let ignoredFiles = GetIgnoredFiles(this.resourceName)
-        
-        ignoredFiles = ignoredFiles.map(file => ResolveFile(resourcePath, file))
-        files = files.map(file => ResolveFile(resourcePath, file))
-        files = files.flat()
-
-        // Remove ignored files
-        files = files.filter(file => !ignoredFiles.includes(file))
-
-        return files
-    }
-
     getFilesToBuild() {
-        const files = this.getFiles()
+        const files = getResourceProcessableFiles(this.resourceName)
         const cache = loadCache(this.resourceName)
         const filesToBuild = []
 
@@ -61,7 +46,7 @@ class PreProcessor {
     }
 
     async run(ignoreCache) {
-        let files = ignoreCache ? this.getFiles() : this.getFilesToBuild()
+        let files = ignoreCache ? getResourceProcessableFiles(this.resourceName) : this.getFilesToBuild()
         
         if (files.length == 0) {
             throw new Error(`No files provided by the resource (probably a typo), check the manifest of ${this.resourceName}`)
@@ -107,6 +92,7 @@ class PreProcessor {
 
                     fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
                     fs.writeFileSync(filePathBuild, file)
+                    resolve()
                 })
             }
 
@@ -197,7 +183,7 @@ class PreProcessor {
     async writeCache() {
         let cache = []
 
-        for (let filePath of this.getFiles()) {
+        for (let filePath of getResourceProcessableFiles(this.resourceName)) {
             const stats = fs.statSync(filePath)
 
             cache.push({
