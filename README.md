@@ -81,7 +81,7 @@ Classes are a model for creating objects (a particular data structure), providin
 It is possible as well to extend already existing classes, each method of the class that extends the other class will have a variable named `super` which is an instantiated object of the original class, calling this variable as a function will call the constructor of the original class, otherwise the data of the original class can be accessed.  
 Constructor parameters are those passed when a new object is instantiated. [Read more here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)  
 > **Note** Classes have their own type, so calling `type(obj)` with an instantiated class will return the class name
-
+> **Note** You can edit the class prototype after the definition using the `__prototype` attribute 
 ---
 
 Syntax:  
@@ -227,7 +227,7 @@ function stopwatch(func)
     return function(...)
         local time = GetGameTimer()
         local data = func(...)
-        print(func.name.." taken "..(GetGameTimer() - time).."ms to execute")
+        print("taken "..(GetGameTimer() - time).."ms to execute")
         return data
     end
 end
@@ -246,6 +246,38 @@ someMathIntensiveFunction(10, 50, 100)
 --[[
     someMathIntensiveFunction taken 2ms to execute
 ]]
+```
+
+```lua
+function netevent(self, func, name)
+    RegisterNetEvent(name)
+    AddEventHandler(name, function(...)
+        func(self, ...) -- Remember to call the function with the class instance!
+    end)
+
+    return func
+end
+
+class Events {
+    @netevent("Utility:MyEvent") -- Decorators can also be used in classes fields (will pass self instance)
+    eventHandler = function()
+        print("Event triggered!")
+    end
+}
+```
+
+```lua
+function callInit(class)
+    class:init()
+    return class
+end
+
+@callInit -- Decorators can also be used in classes fields like functions
+class MyClass {
+    init = function()
+        print("Class initialized!")
+    end
+}
 ```
 
 ### Default value
@@ -429,6 +461,9 @@ local isResultGreaterThan2 = result > 2 ? "Yes" : "No"
 
 ### Throw
 Used to create custom exceptions in code, by using `throw`, you can specify an error as any value (generally a string or an object) that provides information about the issue, which can then be caught and handled by a try-catch block.
+the try-catch block can also return a value. 
+
+Custom errors need to extend the `Error` class and can provide a `toString` to return a fully custom error message, by default the error message will be `<type>: <self.message>`
 
 Example:
 ```lua
@@ -440,8 +475,8 @@ end
 ```
 
 ```lua
-class CustomError {
-    constructor(importantInfo)
+class CustomError extends Error {
+    constructor = function(importantInfo)
         self.info = importantInfo
     end
 }
@@ -453,6 +488,24 @@ catch e then
         print(e.info)
     end
 end
+```
+
+```lua
+class AnotherTypeOfError extends Error {}
+
+throw new AnotherTypeOfError("This is the message")
+-- AnotherTypeOfError: This is the message
+```
+
+```lua
+class CustomError2 extends Error {
+    toString = function()
+        print("Custom message: "..self.message)
+    end
+}
+
+throw new CustomError2("Some important info here")
+-- Custom message: Some important info here
 ```
 
 ### Try-catch
