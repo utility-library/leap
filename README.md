@@ -13,6 +13,8 @@ You can find the files created by this system under the `cache` folder in the ro
 After preprocessing, Leap automatically adds the `build` subfolder (if needed) to all file declarations in the `fxmanifest.lua` under the `client`, `server`, `shared`, and `escrow_ignore` sections.
 Since it will modify the `fxmanifest.lua` it requires the permission to run the `refresh` command, you can allow this by adding `add_ace resource.leap command.refresh allow` in your `server.cfg`
 
+> The [vscode syntax highlight extension is available!](https://marketplace.visualstudio.com/items?itemName=XenoS.leap-lua).
+
 > **Note** To contribute to the grammar and/or preprocessor in general please visit the `preprocessor` branch.
 
 ## Usage
