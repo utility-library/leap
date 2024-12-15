@@ -303,6 +303,34 @@ print(multiply(5))
 -- Expected output: 5
 ```
 
+### Filter
+A filter is a mechanism for validating specific conditions before a function is executed. It serves as a precondition gatekeeper, ensuring the function runs only if all criteria are satisfied. If any condition fails, the filter stops execution and returns an error message.  
+Filters simplify code by centralizing validation logic and making it reusable across multiple functions.  
+They can access local variables from their enclosing scope and are evaluated with the [`using`](#using-operator) operator.
+
+Syntax:  
+```lua
+filter Name(param1, param2, ...)
+    condition1 else "Error message for condition1!",
+    condition2
+end
+
+filter Name
+    condition1 else "Error message for condition1!",
+    ...
+end
+```
+
+Example:
+```lua
+filter IsAuthorized(action)
+    user.role == "admin" else "User is not an admin!",
+    user.permissions[action] else "User lacks permission to perform ${action}!",
+end
+
+-- Check "using" for a usage example
+```
+
 ### In operator
 Checks whether a specified substring/element exists in an string/table. It returns true if the substring/element is found and false otherwise.
 
@@ -531,7 +559,7 @@ end
 
 ### Type checking
 Type checking is the process of verifying data types at runtime to prevent errors and ensure compatibility. It ensures that parameters are used with compatible types. This runtime checking helps catch type errors that could lead to unexpected behavior.
-> **Note** Classes can also be used as types
+> **Note** [Classes](#classes) can also be used as types
 
 Syntax:  
 ```lua
@@ -560,6 +588,30 @@ function FunctionThatAcceptOnlyExampleClass(<Example> example)
 end
 
 FunctionThatAcceptOnlyExampleClass("Test") -- Error since string is not of type Example
+```
+
+### Using operator
+The `using` operator runs a [filter](#filter), validating the conditions defined within it. If any of the conditions fail, it throws an error, preventing the execution of the associated code.
+although they are almost always used in functions nothing prohibits you from being able to use them where you want to
+
+Syntax:
+```lua
+using Filter(param1, param2, ...)
+
+using Filter
+```
+
+Example:
+```lua
+function deletePost(user: User) using IsAuthorized("deletePost") -- Check "filter" to see the filter code
+    print("Post deleted successfully!")
+end
+
+-- This is also valid!
+function deletePost(user: User) 
+    using IsAuthorized("deletePost")
+    print("Post deleted successfully!")
+end
 ```
 
 ## [Convars](https://docs.fivem.net/docs/scripting-reference/convars/)
