@@ -29,6 +29,12 @@ class PreProcessor {
         const cache = loadCache(this.resourceName)
         const filesToBuild = []
 
+        // Something has been deleted, trigger full rebuild
+        if (files.length < cache.length) {
+            this.clearBuildFolder()
+            return files
+        }
+
         files.map(file => {
             const cachedFile = cache.find(cacheFile => cacheFile.path == absToRelative(file, this.resourceName))
 
@@ -43,6 +49,10 @@ class PreProcessor {
         })
 
         return filesToBuild
+    }
+
+    clearBuildFolder() {
+        fs.rmSync(path.join(this.resourceName, "build/"), {recursive: true, force: true})
     }
 
     async run(ignoreCache) {
