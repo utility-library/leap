@@ -55,6 +55,7 @@ RegisterCommand("leap", async (source, args) => {
 
     switch(type) {
         case "build": {
+            await preprocessor.clearBuildFolder()
             await preprocessor.run(true)
             await preprocessor.setPathsAsBuildRelative()
             console.log(`^2Builded ${resourceName} successfully^0`)
