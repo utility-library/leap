@@ -2,7 +2,7 @@ const fs = require("fs")
 const path = require("path");
 
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
-const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles} = require("./utils")
+const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles, relativeToAbs, cleanDeletedFilesFromBuild} = require("./utils")
 const {preprocessCode} = require("./leap");
 
 const replaceLast = (str, pattern, replacement) => {
@@ -29,12 +29,6 @@ class PreProcessor {
         const cache = loadCache(this.resourceName)
         const filesToBuild = []
 
-        // Something has been deleted, trigger full rebuild
-        if (files.length < cache.length) {
-            this.clearBuildFolder()
-            return files
-        }
-
         files.map(file => {
             const cachedFile = cache.find(cacheFile => cacheFile.path == absToRelative(file, this.resourceName))
 
@@ -51,12 +45,17 @@ class PreProcessor {
         return filesToBuild
     }
 
-    clearBuildFolder() {
-        fs.rmSync(path.join(this.resourceName, "build/"), {recursive: true, force: true})
-    }
-
     async run(ignoreCache) {
         let files = ignoreCache ? getResourceProcessableFiles(this.resourceName) : this.getFilesToBuild()
+
+        if (cleanDeletedFilesFromBuild(this.resourceName)) {
+            await this.writeCache()
+           
+            if (files.length == 0) {
+                return
+            }
+        }
+        
         
         if (files.length == 0) {
             throw new Error(`No files provided by the resource (probably a typo), check the manifest of ${this.resourceName}`)

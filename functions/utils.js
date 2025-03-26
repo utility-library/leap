@@ -94,6 +94,22 @@ function hasAnyFileBeenModified(resourceName) {
     return false
 }
 
+function cleanDeletedFilesFromBuild(resourceName) {
+    const cache = loadCache(resourceName)
+    let somethingDeleted = false
+
+    for (let file of cache) {
+        const _path = relativeToAbs(file.path, resourceName)
+        if (!fs.existsSync(_path)) {
+            const buildpath = relativeToAbs("build/"+file.path, resourceName)
+            fs.rmSync(buildpath, {force: true})
+            somethingDeleted = true
+        }
+    }
+
+    return somethingDeleted
+}
+
 function absToRelative(filePath, resourceName) {
     let resourcePath = GetResourcePath(resourceName)
     resourcePath = resourcePath.replace(/(\/\/|\/)/g, "\\")
@@ -114,6 +130,7 @@ module.exports = {
     relativeToAbs,
     isLeapDependency,
     loadCache,
+    cleanDeletedFilesFromBuild,
     hasCachedFileBeenModified,
     hasAnyFileBeenModified,
     getResourceProcessableFiles
