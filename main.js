@@ -3,8 +3,6 @@ const {PreProcessor} = require("./functions/preprocessResource")
 const {isLeapDependency, hasAnyFileBeenModified} = require("./functions/utils")
 //#endregion
 
-let flag = true
-
 //#region Build Task
 let leapBuildTask = {
     shouldBuild(res) {
@@ -21,7 +19,9 @@ let leapBuildTask = {
                     await preprocessor.writeCache()
                 } catch (e) {
                     cb(false, e.message)
+                    return
                 }
+
                 cb(true)
             } catch (e) {
                 cb(false, e.message)
