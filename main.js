@@ -55,7 +55,9 @@ RegisterCommand("leap", async (source, args) => {
 
     switch(type) {
         case "build": {
-            await preprocessor.clearBuildFolder()
+            const _path = relativeToAbs("build/", resourceName)
+            fs.rmSync(_path, {recursive: true, force: true})
+
             await preprocessor.run(true)
             await preprocessor.setPathsAsBuildRelative()
             console.log(`^2Builded ${resourceName} successfully^0`)
