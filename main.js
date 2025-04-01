@@ -1,6 +1,7 @@
 //#region Imports
 const {PreProcessor} = require("./functions/preprocessResource")
-const {isLeapDependency, hasAnyFileBeenModified} = require("./functions/utils")
+const {isLeapDependency, hasAnyFileBeenModified, relativeToAbs} = require("./functions/utils")
+const {rmSync} = require("fs")
 //#endregion
 
 //#region Build Task
@@ -56,7 +57,7 @@ RegisterCommand("leap", async (source, args) => {
     switch(type) {
         case "build": {
             const _path = relativeToAbs("build/", resourceName)
-            fs.rmSync(_path, {recursive: true, force: true})
+            rmSync(_path, {recursive: true, force: true})
 
             await preprocessor.run(true)
             await preprocessor.setPathsAsBuildRelative()
