@@ -76,6 +76,80 @@ RegisterNetEvent("myEvent", function(myObject)
 end)
 ```
 
+### leap.serialize
+Converts an object (typically an instance of a class) into a serializable table format.
+This is useful for sending objects over the network, where only basic Lua types can be transmitted.
+
+> **Note** Objects are automatically serialized when sent over the network, but this can be used manually when needed (e.g., saving to a file).
+
+Example:
+```lua
+local myObject = MyClass:new()
+myObject.myVar = "Hello"
+
+local serialized = leap.serialize(myObject) -- {myVar = "Hello"}
+TriggerServerEvent("myEvent", serialized)
+```
+
+### leap.fsignature
+Retrieves the function signature metadata of a given function, such as argument names and return status.  
+
+> **Note** Useful for debugging, documentation generation, or developer tooling that needs to understand a function's structure.  
+
+**Signature format example:**
+```lua
+{
+    args = {
+        { name = "a" },
+        { name = "b" },
+    },
+    name = "myFunction",
+    has_return = true,
+}
+```
+
+> **Note** `has_return = true` doesn't guarantee that the function *always* returns a value, it simply indicates that a `return` statement **with a value** was detected somewhere in the function body.
+
+Example:
+```lua
+local function addNumbers(numA, numB)
+    return numA + numB
+end
+
+local signature = leap.fsignature(addNumbers)
+
+if signature then
+    print("Function name:", signature.name)
+    print("Has return:", signature.has_return)
+    
+    print("Arguments:")
+    for i, arg in ipairs(signature.args) do
+        print(i.." = "..arg.name)
+    end
+else
+    print("No signature metadata found.")
+end
+
+-- OUTPUT:
+
+-- Function name: addNumbers
+-- Has return: true
+-- Arguments:
+-- 1 = numA
+-- 2 = numB
+```
+
+### type (override)
+Overrides Lua's native `type` behavior.
+When `type(obj)` is called on an object created from a class, it will return the class name instead of `"table"`.
+
+> **Note** This checks and return the `__type` field inside the "table", classes are just tables with metatable
+
+```lua
+local myDog = new Dog()
+print(type(myDog)) -- Output: "Dog"
+```
+
 ## Features
 
 ### Classes
@@ -383,6 +457,25 @@ local string = "Hello World"
 if "World" in string then
     print("found World")
 end
+```
+
+### Keyword Arguments
+Keyword arguments allow calling functions with named parameters, improving readability and flexibility. They also allow parameters to be passed in any order.
+
+Syntax:
+```lua
+functionName(param1 = value1, param2 = value2, ...)
+```
+
+Example:
+```lua
+function greet(name, age)
+    print("Hello " .. name .. ", Age: " .. age)
+end
+
+greet(name = "John", 20)
+greet(age = 21, name = "Anna")
+greet("Will", 34)
 ```
 
 ### New
