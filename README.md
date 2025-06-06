@@ -64,9 +64,8 @@ resource structure tree after build:
 ## Leap Library
 
 ### leap.deserialize
-Converts serialized class back into an instance of a specific class, restoring the object's structure and data. This is particularly useful for recreating objects when transferring data on the network (client > server, server > client)
-
-> **Note** Object are automatically serialized when sended over the network
+Converts serialized class back into an instance of a specific class, restoring the object's structure and data  
+All sub objects will also be deserialized recursively
 
 Example:
 ```lua
@@ -76,11 +75,21 @@ RegisterNetEvent("myEvent", function(myObject)
 end)
 ```
 
-### leap.serialize
-Converts an object (typically an instance of a class) into a serializable table format.
-This is useful for sending objects over the network, where only basic Lua types can be transmitted.
+Classes can expose the `deserialize` method to achieve custom serialization.  
+Example:
+```lua
+class MyClass {
+    myVar = vec3(1, 2, 3),
 
-> **Note** Objects are automatically serialized when sent over the network, but this can be used manually when needed (e.g., saving to a file).
+    deserialize = function(data)
+        self.myVar = vector3(data.myVar[1], data.myVar[2], data.myVar[3]) -- Restore the vec3 from the array
+    end
+}
+```
+
+### leap.serialize
+Converts an object or an array of objects (typically an instance of a class) into a serializable table format.  
+All sub objects will also be serialized recursively
 
 Example:
 ```lua
@@ -89,6 +98,20 @@ myObject.myVar = "Hello"
 
 local serialized = leap.serialize(myObject) -- {myVar = "Hello"}
 TriggerServerEvent("myEvent", serialized)
+```
+
+Classes can expose the `serialize` method to achieve custom serialization.  
+Example:
+```lua
+class MyClass {
+    myVar = vec3(1, 2, 3),
+
+    serialize = function()
+        return {
+            myVar = {math.round(self.myVar.x, 3), math.round(self.myVar.y, 3), math.round(self.myVar.z, 3)}, -- Save a vec3 to an array with rounded values
+        }
+    end
+}
 ```
 
 ### leap.fsignature
@@ -457,6 +480,22 @@ local string = "Hello World"
 if "World" in string then
     print("found World")
 end
+```
+
+### Is operator
+The is operator checks whether an object is an instance of a specific class or one of its subclasses. It is a type-checking operator that supports inheritance-aware comparisons.
+
+Example:
+```lua
+class Animal {}
+class Dog extends Animal {}
+
+local a = Animal()
+local d = Dog()
+
+print(d is Dog)    -- true  (exact class)
+print(d is Animal) -- true  (subclass of Animal)
+print(a is Dog)    -- false (not an instance of Dog or its subclasses)
 ```
 
 ### Keyword Arguments
