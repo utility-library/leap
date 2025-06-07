@@ -66,6 +66,7 @@ resource structure tree after build:
 ### leap.deserialize
 Converts serialized class back into an instance of a specific class, restoring the object's structure and data  
 All sub objects will also be deserialized recursively
+> **Note**: leap.deserialize will NOT call the constructor of the class
 
 Example:
 ```lua
@@ -76,7 +77,7 @@ end)
 ```
 
 Classes can expose the `deserialize` method to achieve custom serialization.  
-Example:
+
 ```lua
 class MyClass {
     myVar = vec3(1, 2, 3),
@@ -101,7 +102,7 @@ TriggerServerEvent("myEvent", serialized)
 ```
 
 Classes can expose the `serialize` method to achieve custom serialization.  
-Example:
+
 ```lua
 class MyClass {
     myVar = vec3(1, 2, 3),
@@ -223,7 +224,7 @@ class BaseClass {
 class AdvancedClass extends BaseClass {
     constructor = function()
         print("instantiated advanced class")
-        self.super()
+        self:super()
         
         -- right now they should printout the same value, since they have not been touched
         print(self.super.someVariable)
@@ -384,11 +385,13 @@ class Events {
 
 ```lua
 function callInit(class)
-    class:init()
+    class.__prototype.init() -- This will call the init function without an instance so self will be nil
+    class.__prototype.mySpecialFlag = true -- You can also modify the class prototype to inject custom data
+
     return class
 end
 
-@callInit -- Decorators can also be used in classes fields like functions
+@callInit -- Decorators can also be used in classes
 class MyClass {
     init = function()
         print("Class initialized!")
@@ -663,7 +666,7 @@ class CustomError extends Error {
 try 
     throw new CustomError("Some important info here")
 catch e then
-    if type(e) == "CustomError" then
+    if e is CustomError then
         print(e.info)
     end
 end
@@ -734,7 +737,7 @@ class Example {
     myVar = true
 }
 
-function FunctionThatAcceptOnlyExampleClass(<Example> example)
+function FunctionThatAcceptOnlyExampleClass(example: Example)
     print("You passed the right variable!")
 end
 
@@ -743,7 +746,6 @@ FunctionThatAcceptOnlyExampleClass("Test") -- Error since string is not of type 
 
 ### Using operator
 The `using` operator runs a [filter](#filter), validating the conditions defined within it. If any of the conditions fail, it throws an error, preventing the execution of the associated code.
-although they are almost always used in functions nothing prohibits you from being able to use them where you want to
 
 Syntax:
 ```lua
