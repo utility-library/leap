@@ -13,9 +13,9 @@ You can find the files created by this system under the `cache` folder in the ro
 After preprocessing, Leap automatically adds the `build` subfolder (if needed) to all file declarations in the `fxmanifest.lua` under the `client`, `server`, `shared`, and `escrow_ignore` sections.
 Since it will modify the `fxmanifest.lua` it requires the permission to run the `refresh` command, you can allow this by adding `add_ace resource.leap command.refresh allow` in your `server.cfg`
 
-> The [vscode syntax highlight extension is available!](https://marketplace.visualstudio.com/items?itemName=XenoS.leap-lua).
+> The [vscode syntax highlight extension is available!](https://marketplace.visualstudio.com/items?itemName=XenoS.leap-lua), to contribute visit [leap_syntax_highlight_vscode](https://github.com/XenoS-ITA/leap_syntax_highlight_vscode).
 
-> **Note** To contribute to the grammar and/or preprocessor in general please visit the `preprocessor` branch.
+> **Note** To contribute to the grammar and/or preprocessor in general please visit [leap_preprocessor](https://github.com/XenoS-ITA/leap_preprocessor).
 
 ## Usage
 To use Leap, simply download it and start it as you would with any normal resource. You'll need to add Leap to your resource's dependencies, after which you can access any of its features. When the resource starts, Leap will handle the preprocessing of the necessary files automatically.
@@ -34,7 +34,7 @@ dependency "leap" -- This is necessary to have the resource automatically prepro
 You can also manually use the `leap restart your_resource_that_use_leap` command to preprocess the files and restart the resource.
 
 ### Escrow
-To use Leap in the escrow or outside the Leap ecosystem, you can create a standalone version by running the command [leap build](#leap-build)
+To use Leap under escrow or outside the Leap ecosystem, please deploy only the build folder, excluding the source as its not "standard" lua syntax
 
 ## Commands
 **TIP**: these commands can also be used in the cfg after the leap startup.
