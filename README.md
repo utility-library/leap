@@ -114,6 +114,23 @@ class MyClass {
 }
 ```
 
+The `skipSerialize` decorator can be used to prevent certain fields from being serialized.
+
+```lua
+@skipSerialize({"transient"})
+class MyClass {
+    myVar = vec3(1, 2, 3),
+    transient = false,
+}
+
+local obj = new MyClass()
+-- Need to change values to trigger serialization
+obj.myVar = vector3(2, 3, 4)
+obj.transient = true
+
+local serialized = leap.serialize(obj) -- {"__type":"MyClass","myVar":{"x":2.0,"y":3.0,"z":4.0}}
+```
+
 ### leap.fsignature
 Retrieves the function signature metadata of a given function, such as argument names and return status.  
 
