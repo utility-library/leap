@@ -1,5 +1,2 @@
 node_modules
-*.code-workspace
-yarn.lock
-.yarn.installed
-src/out.js
+package-lock.json
