@@ -1,30 +1,10 @@
 {
-  "name": "leap",
-  "version": "1.0.5",
-  "description": "Pre-processor of a \"modernized\" and extended version of lua that pre-processes in pure executable lua. Mainly intended for FiveM",
-  "main": "src/index.js",
-  "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "build": "esbuild src/index.js --bundle --platform=node --outfile=src/out.js"
+    "run": "node index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/utility-library/Leap.git"
-  },
-  "keywords": [],
-  "authors": "XenoS, MrFreex",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/utility-library/Leap/issues"
-  },
-  "homepage": "https://github.com/utility-library/Leap#readme",
   "dependencies": {
-    "@citizenfx/server": "^2.0.6183-1",
-    "axios": "^1.2.2",
-    "dedent": "^0.7.0",
-    "esbuild": "0.16.12",
-    "glob": "^8.0.3",
-    "verbal-expressions": "^1.0.2"
+    "antlr4": "^4.13.2",
+    "glob": "^10.3.10",
+    "luamin": "^1.0.4"
   }
 }
