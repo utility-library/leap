@@ -180,6 +180,29 @@ end
 -- 2 = numB
 ```
 
+### leap.minimal
+**(FLAG)** When `tostring` is called on a class that lacks a custom `toString` method, this flag ensures only a minimal representation of the class structure is returned—excluding all internal data or contents.
+**Type:** `boolean`
+
+Example:
+```lua
+class MyClass {
+    constructor = function()
+        print("instantiated base class")
+    end
+}
+
+local obj = new MyClass()
+obj.something = 100
+obj.another = "200"
+print(tostring(obj)) -- Output: <MyClass:0000019DED7DF980> something: 100, another: "200"
+
+leap.minimal = true
+
+print(tostring(obj)) -- Output: <MyClass:0000019DED7DF980>
+```
+
+
 ### type (override)
 Overrides Lua's native `type` behavior.
 When `type(obj)` is called on an object created from a class, it will return the class name instead of `"table"`.
