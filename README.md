@@ -17,8 +17,14 @@ Since it will modify the `fxmanifest.lua` it requires the permission to run the 
 
 > **Note** To contribute to the grammar and/or preprocessor in general please visit [leap_preprocessor](https://github.com/XenoS-ITA/leap_preprocessor).
 
+## Installation
+1. [Download the latest version](https://github.com/utility-library/leap/archive/refs/heads/main.zip) or clone the repository with `git clone hhttps://github.com/utility-library/leap.git`
+2. After downloading/cloning, inside the folder run `npm install`
+3. Then you can start leap as any other resource (`start leap` or `ensure leap` in your `server.cfg`)
+
 ## Usage
-To use Leap, simply download it and start it as you would with any normal resource. You'll need to add Leap to your resource's dependencies, after which you can access any of its features. When the resource starts, Leap will handle the preprocessing of the necessary files automatically.
+Add Leap to your resource's dependencies, after which you can access any of its features.  
+When the resource starts, Leap will handle the preprocessing of the necessary files automatically.
 
 Example:
 `your_resource_that_use_leap > fxmanifest.lua`:
