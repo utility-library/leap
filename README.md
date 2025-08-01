@@ -7,10 +7,10 @@ Leap is inspired by the functionality and syntax found in [JS](https://www.javas
 
 To assist with debugging and error reporting, Leap retains the original line numbers from the code.
 
-Leap features a caching system that processes only the files that have been modified, ensuring that the resource is only preprocessed when necessary; if no changes are detected, the resource will simply restart.
+Leap features a caching system that processes only the files that have been modified, ensuring that the resource is only preprocessed when necessary; if no changes are detected, the resource will simply restart.  
 You can find the files created by this system under the `cache` folder in the root folder of your server (near the `resources` folder)
 
-After preprocessing, Leap automatically adds the `build` subfolder (if needed) to all file declarations in the `fxmanifest.lua` under the `client`, `server`, `shared`, and `escrow_ignore` sections.
+After preprocessing, Leap automatically adds the `build` subfolder (if needed) to all file declarations in the `fxmanifest.lua` under the `client`, `server`, `shared`, and `escrow_ignore` sections.  
 Since it will modify the `fxmanifest.lua` it requires the permission to run the `refresh` command, you can allow this by adding `add_ace resource.leap command.refresh allow` in your `server.cfg`
 
 > The [vscode syntax highlight extension is available!](https://marketplace.visualstudio.com/items?itemName=XenoS.leap-lua), to contribute visit [leap_syntax_highlight_vscode](https://github.com/XenoS-ITA/leap_syntax_highlight_vscode).
@@ -18,12 +18,12 @@ Since it will modify the `fxmanifest.lua` it requires the permission to run the 
 > **Note** To contribute to the grammar and/or preprocessor in general please visit [leap_preprocessor](https://github.com/XenoS-ITA/leap_preprocessor).
 
 ## Installation
-1. [Download the latest version](https://github.com/utility-library/leap/archive/refs/heads/main.zip) or clone the repository with `git clone hhttps://github.com/utility-library/leap.git`
+1. [Download the latest version](https://github.com/utility-library/leap/archive/refs/heads/main.zip) or clone the repository with `git clone https://github.com/utility-library/leap.git`
 2. After downloading/cloning, inside the folder run `npm install`
 3. Then you can start leap as any other resource (`start leap` or `ensure leap` in your `server.cfg`)
 
 ## Usage
-Add Leap to your resource's dependencies, after which you can access any of its features.  
+Add Leap to your resource dependencies, after which you can access any of its features.  
 When the resource starts, Leap will handle the preprocessing of the necessary files automatically.
 
 Example:
