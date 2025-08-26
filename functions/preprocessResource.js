@@ -46,6 +46,8 @@ class PreProcessor {
     }
 
     async run(ignoreCache) {
+        let resourcePath = path.normalize(GetResourcePath(this.resourceName))
+
         let files = ignoreCache ? getResourceProcessableFiles(this.resourceName) : this.getFilesToBuild()
 
         if (cleanDeletedFilesFromBuild(this.resourceName)) {
@@ -74,7 +76,7 @@ class PreProcessor {
                         let file = fs.readFileSync(filePath, "utf-8")
                         let preprocessed = preprocessCode(file)
                         
-                        let filePathBuild = replaceLast(filePath, this.resourceName, path.join(this.resourceName, "build/"))
+                        let filePathBuild = path.normalize(filePath).replace(resourcePath, path.join(resourcePath, "build/"))
 
                         fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
                         fs.writeFileSync(filePathBuild, preprocessed)
@@ -97,7 +99,7 @@ class PreProcessor {
                 promise = new Promise((resolve, reject) => {
                     let file = fs.readFileSync(filePath, "utf-8")
 
-                    let filePathBuild = replaceLast(filePath, this.resourceName, path.join(this.resourceName, "build/"))
+                    let filePathBuild = path.normalize(filePath).replace(resourcePath, path.join(resourcePath, "build/"))
 
                     fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
                     fs.writeFileSync(filePathBuild, file)
