@@ -7,7 +7,7 @@ function GetAllScripts(resourceName) {
     files = GetAllResourceMetadata(resourceName, "client_script")
     files.push(...GetAllResourceMetadata(resourceName, "server_script"))
     files.push(...GetAllResourceMetadata(resourceName, "shared_script"))
-    files.push(...GetAllResourceMetadata(resourceName, "files"))
+    files.push(...GetAllResourceMetadata(resourceName, "file"))
 
     for (let index in files) {
         let file = files[index]

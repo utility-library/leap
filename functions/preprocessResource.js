@@ -150,7 +150,7 @@ class PreProcessor {
             for (let line of lines) {
                 if (!check) {
                     // Start multiple files
-                    if (line.startsWith("client_scripts") || line.startsWith("server_scripts") || line.startsWith("shared_scripts") || line.startsWith("escrow_ignore")) {
+                    if (line.startsWith("client_scripts") || line.startsWith("server_scripts") || line.startsWith("shared_scripts") || line.startsWith("files") || line.startsWith("escrow_ignore")) {
                         check = true
 
                     // Start single file, dont skip
