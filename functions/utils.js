@@ -45,6 +45,17 @@ function isLeapDependency(res) {
         }
     }
 
+    const nDependencies = GetNumResourceMetadata(res, 'dependencie')
+    if (nDependencies > 0) {
+        for (let i = 0; i < nDependencies; i++) {
+            const dependencyName = GetResourceMetadata(res, 'dependencie')
+
+            if (dependencyName == GetCurrentResourceName()) {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
