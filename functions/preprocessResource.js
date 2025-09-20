@@ -121,13 +121,13 @@ class PreProcessor {
         })
     }
 
-    lineNeedToBeBuildRelative(line, ignoredFiles) {
+    lineNeedToBeBuildRelative(line, ignoredFiles, isFiles) {
         return (
             !line.includes("build/") && !line.includes("@") // Not already build relative and not externally loaded
         ) && (
             line.includes("\"") || line.includes("'") // Its a string
         ) && (
-            line.includes(".lua") || line.includes(".*") // Its a lua/any file
+            line.includes(".lua") || (!isFiles && line.includes(".*")) // Its a lua/any file
         ) && (
             ignoredFiles.length == 0 || !ignoredFiles.some(file => line.includes(file)) // Skip building ignored files
         )
@@ -146,12 +146,14 @@ class PreProcessor {
             const ignored = GetIgnoredFiles(this.resourceName)
             let check = false
             let singleFile = false
+            let files = false
 
             for (let line of lines) {
                 if (!check) {
                     // Start multiple files
                     if (line.startsWith("client_scripts") || line.startsWith("server_scripts") || line.startsWith("shared_scripts") || line.startsWith("files") || line.startsWith("escrow_ignore")) {
                         check = true
+                        files = line.startsWith("files")
 
                     // Start single file, dont skip
                     } else if (line.startsWith("client_script") || line.startsWith("server_script") || line.startsWith("shared_script")) {
@@ -167,7 +169,7 @@ class PreProcessor {
 
                 if (check) {
                     //console.log(line, ignored, ignored.some(file => line.includes(file)))
-                    if (this.lineNeedToBeBuildRelative(line, ignored)) {
+                    if (this.lineNeedToBeBuildRelative(line, ignored, files)) {
                         line = line.replace(/(["'])/, "$1build/")
                         somethingChanged = true
                     }
