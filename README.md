@@ -20,7 +20,8 @@ Since it will modify the `fxmanifest.lua` it requires the permission to run the 
 ## Installation
 1. [Download the latest version](https://github.com/utility-library/leap/archive/refs/heads/main.zip) or clone the repository with `git clone https://github.com/utility-library/leap.git`
 2. After downloading/cloning, inside the folder run `npm install`
-3. Then you can start leap as any other resource (`start leap` or `ensure leap` in your `server.cfg`)
+3. Add `add_unsafe_worker_permission leap` to your `server.cfg` (explained [here](#new-fivem-sandbox-workaround))
+4. Then you can start leap as any other resource (`start leap` or `ensure leap` in your `server.cfg`)
 
 ## Usage
 Add Leap to your resource dependencies, after which you can access any of its features.  
@@ -38,6 +39,16 @@ dependency "leap" -- This is necessary to have the resource automatically prepro
 ```
 
 You can also manually use the `leap restart your_resource_that_use_leap` command to preprocess the files and restart the resource.
+
+## NEW FiveM Sandbox Workaround
+To use Leap with the newly introduced [FiveM sandbox](https://docs.fivem.net/docs/developers/sandbox/), add the following line to your `server.cfg`:
+```cfg
+add_unsafe_worker_permission leap
+```
+
+Leap requires write access to resource folders in order to preprocess resources. Since the sandbox blocks direct filesystem writes, Leap will automatically spawn a new [Node.js Worker Thread](https://nodejs.org/api/worker_threads.html) that bypasses these sandbox restrictions, allowing Leap to write to the resource folder when needed.
+
+If you don't trust this behavior, i highly suggest reading the implementation yourself to verify exactly what the worker does and what permissions are being used.
 
 ### Escrow
 To use Leap under escrow or outside the Leap ecosystem, please deploy only the build folder, excluding the source as its not "standard" lua syntax
