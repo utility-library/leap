@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Version
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Bumping version..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            npm version patch --no-git-tag-version
+            VERSION=$(node -p "require('./package.json').version")
+            TAG="v$VERSION"
+            git add package.json
+            [ -f package-lock.json ] && git add package-lock.json
+            git commit -m "chore: bump version to $VERSION [skip ci]"
+            git push origin main
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create Release Package
+        run: |
+          # Create a clean zip excluding dev files
+          zip -r leap.zip . -x ".git/*" ".github/*" "node_modules/*" "cache/*" ".gitignore" "README.md" "package-lock.json"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag ${{ steps.pkg.outputs.TAG }}
+          git push origin ${{ steps.pkg.outputs.TAG }}
+
+          gh release create ${{ steps.pkg.outputs.TAG }} \
+            --title "${{ steps.pkg.outputs.TAG }}" \
+            --generate-notes \
+            leap.zip
