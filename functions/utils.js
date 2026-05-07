@@ -60,10 +60,12 @@ function isLeapDependency(res) {
 }
 
 function loadCache(resourceName) {
+    const path = GetResourcePath(GetCurrentResourceName())
+
     let file = "[]"
 
     try {
-        file = fs.readFileSync("cache/leap/" + resourceName + ".json", "utf-8")
+        file = fs.readFileSync(path + "/cache/" + resourceName + ".json", "utf-8")
     } catch (e) {}
 
     return JSON.parse(file)

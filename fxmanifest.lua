@@ -1,6 +1,6 @@
 fx_version "cerulean"
 game "gta5"
-authors "XenoS"
+author "XenoS"
 github "https://github.com/utility-library/leap3"
 version "3.0.0"
 
