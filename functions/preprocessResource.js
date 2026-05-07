@@ -2,7 +2,7 @@ const fs = require("fs")
 const path = require("path");
 
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
-const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles, relativeToAbs, cleanDeletedFilesFromBuild} = require("./utils")
+const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles, relativeToAbs, cleanDeletedFilesFromBuild, writeFile} = require("./utils")
 const {preprocessCode} = require("./leap");
 
 const replaceLast = (str, pattern, replacement) => {
@@ -78,9 +78,7 @@ class PreProcessor {
                         
                         let filePathBuild = path.normalize(filePath).replace(resourcePath, path.join(resourcePath, "build/"))
 
-                        fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
-                        fs.writeFileSync(filePathBuild, preprocessed)
-
+                        writeFile(filePathBuild, preprocessed)
                         resolve()
                     } catch (e) {
                         if (e.errors) {
@@ -101,8 +99,7 @@ class PreProcessor {
 
                     let filePathBuild = path.normalize(filePath).replace(resourcePath, path.join(resourcePath, "build/"))
 
-                    fs.mkdirSync(path.dirname(filePathBuild), {recursive: true})
-                    fs.writeFileSync(filePathBuild, file)
+                    writeFile(filePathBuild, file)
                     resolve()
                 })
             }
@@ -184,7 +181,7 @@ class PreProcessor {
                 newLines.push(line)
             }
 
-            fs.writeFileSync(fxmanifest, newLines.join("\n"))
+            writeFile(fxmanifest, newLines.join("\n"))
 
             if (somethingChanged) {
                 ExecuteCommand("refresh")
@@ -195,6 +192,7 @@ class PreProcessor {
 
     async writeCache() {
         let cache = []
+        const path = GetResourcePath(GetCurrentResourceName())
 
         for (let filePath of getResourceProcessableFiles(this.resourceName)) {
             const stats = fs.statSync(filePath)
@@ -207,8 +205,8 @@ class PreProcessor {
             })
         }
 
-        fs.mkdirSync("cache/leap/", {recursive: true})
-        fs.writeFileSync("cache/leap/" + this.resourceName + ".json", JSON.stringify(cache))
+        fs.mkdirSync(path + "/cache/", {recursive: true})
+        fs.writeFileSync(path + "/cache/" + this.resourceName + ".json", JSON.stringify(cache))
     }
 }
 

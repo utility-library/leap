@@ -1,5 +1,103 @@
 const fs = require("fs")
+const path = require("path")
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
+const {Worker} = require("worker_threads")
+
+const worker = new Worker(`
+    const { parentPort } = require("worker_threads");
+    const fs = require("fs");
+    const path = require("path");
+
+    parentPort.on("message", (msg) => {
+        try {
+            if (msg.type === "write") {
+                fs.mkdirSync(path.dirname(msg.path), {recursive: true})
+                fs.writeFileSync(msg.path, msg.content);
+
+                parentPort.postMessage({
+                    ok: true,
+                    action: "write",
+                    path: msg.path
+                });
+                return;
+            }
+
+            if (msg.type === "remove") {
+                fs.rmSync(msg.path, msg.options);
+
+                parentPort.postMessage({
+                    ok: true,
+                    action: "remove",
+                    path: msg.path
+                });
+                return;
+            }
+
+            parentPort.postMessage({
+                ok: false,
+                error: "Unknown action type"
+            });
+        } catch (e) {
+            parentPort.postMessage({
+                ok: false,
+                error: e.message
+            });
+
+        }
+    });
+`, { eval: true });
+
+worker.on("error", (err) => {
+  console.log("worker crashed:", err);
+});
+
+worker.on("exit", (code) => {
+  console.log("worker exit:", code);
+});
+
+function writeFile(filePath, content) {
+    return new Promise((resolve, reject) => {
+        const onMessage = (msg) => {
+            worker.off("message", onMessage);
+
+            if (msg.ok) {
+                resolve(msg);
+            } else {
+                reject(msg.error);
+            }
+        };
+
+        worker.on("message", onMessage);
+
+        worker.postMessage({
+            type: "write",
+            path: filePath,
+            content: content
+        });
+    });
+}
+
+function rmSync(filePath, options) {
+    return new Promise((resolve, reject) => {
+        const onMessage = (msg) => {
+            worker.off("message", onMessage);
+
+            if (msg.ok) {
+                resolve(msg);
+            } else {
+                reject(msg.error);
+            }
+        };
+
+        worker.on("message", onMessage);
+
+        worker.postMessage({
+            type: "remove",
+            path: filePath,
+            options: options
+        });
+    });
+}
 
 function getResourceProcessableFiles(resourceName) {
     let resourcePath = GetResourcePath(resourceName)
@@ -115,7 +213,7 @@ function cleanDeletedFilesFromBuild(resourceName) {
         const _path = relativeToAbs(file.path, resourceName)
         if (!fs.existsSync(_path)) {
             const buildpath = relativeToAbs("build/"+file.path, resourceName)
-            fs.rmSync(buildpath, {force: true})
+            rmSync(buildpath, {force: true})
             somethingDeleted = true
         }
     }
@@ -138,6 +236,8 @@ function relativeToAbs(filePath, resourceName) {
 }
 
 module.exports = {
+    writeFile,
+    rmSync,
     canFileBePreprocessed,
     absToRelative,
     relativeToAbs,

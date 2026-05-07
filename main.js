@@ -1,7 +1,6 @@
 //#region Imports
 const {PreProcessor} = require("./functions/preprocessResource")
-const {isLeapDependency, hasAnyFileBeenModified, relativeToAbs} = require("./functions/utils")
-const {rmSync} = require("fs")
+const {isLeapDependency, hasAnyFileBeenModified, relativeToAbs, writeFile, rmSync} = require("./functions/utils")
 //#endregion
 
 //#region Build Task
