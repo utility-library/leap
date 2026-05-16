@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/utility-library/leap.git"
   },
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Lua extension accessibility pre-processor for FiveM.",
   "main": "main.js",
   "scripts": {
