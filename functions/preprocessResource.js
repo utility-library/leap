@@ -1,5 +1,6 @@
 const fs = require("fs")
 const path = require("path");
+const {minimatch} = require("minimatch");
 
 const {GetAllScripts, GetIgnoredFiles, ResolveFile} = require("./manifest")
 const {canFileBePreprocessed, absToRelative, loadCache, hasCachedFileBeenModified, getResourceProcessableFiles, relativeToAbs, cleanDeletedFilesFromBuild, writeFile} = require("./utils")
@@ -118,6 +119,20 @@ class PreProcessor {
         })
     }
 
+    extractQuotedPath(line) {
+        const match = line.match(/["']([^"']*)["']/)
+
+        return match ? match[1].replace(/\\/g, "/") : null
+    }
+
+    isFileIgnored(filePath, ignoredFiles) {
+        if (!filePath || ignoredFiles.length == 0) {
+            return false
+        }
+
+        return ignoredFiles.some(pattern => minimatch(filePath, pattern.replace(/\\/g, "/")))
+    }
+
     lineNeedToBeBuildRelative(line, ignoredFiles, isFiles) {
         return (
             !line.includes("build/") && !line.includes("@") // Not already build relative and not externally loaded
@@ -126,7 +141,7 @@ class PreProcessor {
         ) && (
             line.includes(".lua") || (!isFiles && line.includes(".*")) // Its a lua/any file
         ) && (
-            ignoredFiles.length == 0 || !ignoredFiles.some(file => line.includes(file)) // Skip building ignored files
+            !this.isFileIgnored(this.extractQuotedPath(line), ignoredFiles) // Skip building ignored files (glob-aware)
         )
     }
 

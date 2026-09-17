@@ -21,6 +21,7 @@
   "dependencies": {
     "antlr4": "^4.13.2",
     "glob": "^10.3.10",
-    "luamin": "^1.0.4"
+    "luamin": "^1.0.4",
+    "minimatch": "^9.0.4"
   }
 }
