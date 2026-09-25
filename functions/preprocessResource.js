@@ -130,7 +130,12 @@ class PreProcessor {
             return false
         }
 
-        return ignoredFiles.some(pattern => minimatch(filePath, pattern.replace(/\\/g, "/")))
+        // Folder names like "[items]" are literal in fivem, but "[" / "]" are
+        // glob character-class syntax to minimatch, so escape them to match literally
+        // while still letting "*" act as a wildcard
+        const escapeBrackets = str => str.replace(/\[/g, "\\[").replace(/\]/g, "\\]")
+
+        return ignoredFiles.some(pattern => minimatch(filePath, escapeBrackets(pattern.replace(/\\/g, "/"))))
     }
 
     lineNeedToBeBuildRelative(line, ignoredFiles, isFiles) {
